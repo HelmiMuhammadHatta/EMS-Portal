@@ -1,0 +1,16 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY ["EMS.API/EMS.API.csproj", "EMS.API/"]
+COPY ["EMS.Application/EMS.Application.csproj", "EMS.Application/"]
+COPY ["EMS.Infrastructure/EMS.Infrastructure.csproj", "EMS.Infrastructure/"]
+COPY ["EMS.Domain/EMS.Domain.csproj", "EMS.Domain/"]
+RUN dotnet restore "EMS.API/EMS.API.csproj"
+COPY . .
+WORKDIR "/src/EMS.API"
+RUN dotnet build "EMS.API.csproj" -c Release -o /app/build
+RUN dotnet publish "EMS.API.csproj" -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "EMS.API.dll"]

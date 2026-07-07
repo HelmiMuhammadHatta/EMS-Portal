@@ -1,0 +1,336 @@
+import { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { attendanceService } from '../services/apiService';
+import { toast } from 'sonner';
+import { Camera, MapPin, MapPinned, ListChecks, CheckCircle, Clock, Timer, UserCircle, LogOut, Download, Calendar as CalendarIcon, X } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+
+export const Attendance = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [loadingGeo, setLoadingGeo] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isCameraOn, setIsCameraOn] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    // Start camera when component mounts
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          setIsCameraOn(true);
+        }
+      } catch (err) {
+        toast.error("Unable to access camera. Please allow camera permissions.");
+        setIsCameraOn(false);
+      }
+    };
+    startCamera();
+
+    return () => {
+      // Stop camera when component unmounts
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['attendances', startDate, endDate],
+    queryFn: () => attendanceService.getAttendances({ page: 1, pageSize: 50, startDate: startDate || undefined, endDate: endDate || undefined })
+  });
+
+  const { data: summary } = useQuery({
+    queryKey: ['attendance-summary', user?.employeeId],
+    queryFn: () => attendanceService.getSummary(user?.employeeId!, new Date().getMonth() + 1, new Date().getFullYear()),
+    enabled: !!user?.employeeId
+  });
+
+  const clockInMutation = useMutation({
+    mutationFn: attendanceService.clockIn,
+    onSuccess: () => {
+      toast.success("Clock-in successful!");
+      queryClient.invalidateQueries({ queryKey: ['attendances'] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.errors?.[0] || "Clock-in failed")
+  });
+
+  const clockOutMutation = useMutation({
+    mutationFn: attendanceService.clockOut,
+    onSuccess: () => {
+      toast.success("Clock-out successful!");
+      queryClient.invalidateQueries({ queryKey: ['attendances'] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.errors?.[0] || "Clock-out failed")
+  });
+
+  const handleExport = async () => {
+    try {
+      const blob = await attendanceService.export({ startDate: startDate || undefined, endDate: endDate || undefined });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Attendances_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error("Failed to export attendances");
+    }
+  };
+
+  const capturePhoto = (): string | null => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.8);
+      }
+    }
+    return null;
+  };
+
+  const handleClockAction = async (type: 'in' | 'out') => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    
+    setLoadingGeo(true);
+    
+    const photoBase64 = capturePhoto();
+    if (!photoBase64) {
+      toast.error("Failed to capture photo. Make sure camera is enabled.");
+      setLoadingGeo(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          
+          let locationName = "Unknown Location";
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+            const data = await res.json();
+            locationName = data.address?.city || data.address?.town || data.address?.village || data.address?.county || data.display_name?.split(',')[0] || "Unknown Location";
+          } catch (e) {
+            console.error("Geocoding failed", e);
+          }
+
+          const payload = { latitude: lat, longitude: lon, locationName, photoBase64 };
+          if (type === 'in') clockInMutation.mutate(payload);
+          else clockOutMutation.mutate(payload);
+        } finally {
+          setLoadingGeo(false);
+        }
+      },
+      (error) => {
+        setLoadingGeo(false);
+        toast.error("Location access denied or failed: " + error.message);
+      }
+    );
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'OnTime':
+        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-50 text-green-700 border border-green-200">On Time</span>;
+      case 'Late':
+        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-yellow-50 text-yellow-700 border border-yellow-200">Late</span>;
+      default:
+        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200">Early Leave</span>;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      
+      <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+        <div className="flex flex-col lg:flex-row items-center gap-8">
+          
+          {/* Camera Section */}
+          <div className="relative flex-shrink-0">
+            <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-full overflow-hidden bg-slate-100 border-4 border-slate-50 shadow-md relative">
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+                className="w-full h-full object-cover"
+              />
+              <canvas ref={canvasRef} className="hidden" />
+              {!isCameraOn && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100">
+                  <Camera size={32} className="mb-2" />
+                  <span className="text-sm font-medium">Camera off</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Action Section */}
+          <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left">
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Live Check-in</h2>
+            <p className="text-slate-500 mt-2 max-w-md">Position yourself in front of the camera and ensure your location services are enabled to clock in or out.</p>
+            
+            <div className="mt-6 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <button 
+                disabled={loadingGeo || clockInMutation.isPending}
+                onClick={() => handleClockAction('in')} 
+                className="flex items-center justify-center gap-2 bg-green-600 text-white px-8 py-3 rounded-xl font-semibold shadow-sm hover:bg-green-700 hover:shadow-md transition-all disabled:opacity-50 w-full sm:w-auto"
+              >
+                {loadingGeo || clockInMutation.isPending ? <Timer size={18} className="animate-pulse" /> : <Clock size={18} />}
+                Clock In
+              </button>
+              <button 
+                disabled={loadingGeo || clockOutMutation.isPending}
+                onClick={() => handleClockAction('out')} 
+                className="flex items-center justify-center gap-2 bg-slate-800 text-white px-8 py-3 rounded-xl font-semibold shadow-sm hover:bg-slate-900 hover:shadow-md transition-all disabled:opacity-50 w-full sm:w-auto"
+              >
+                {loadingGeo || clockOutMutation.isPending ? <Timer size={18} className="animate-pulse" /> : <LogOut size={18} />}
+                Clock Out
+              </button>
+            </div>
+            
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+              <MapPin size={14} className="text-blue-500" />
+              Location tracking enabled
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {summary?.data && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div className="text-sm font-semibold text-slate-500 mb-1">Total Present</div>
+            <div className="text-3xl font-bold text-green-600">{summary.data.totalPresent}</div>
+            <div className="text-xs text-slate-400 mt-1">This month</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div className="text-sm font-semibold text-slate-500 mb-1">Total Late</div>
+            <div className="text-3xl font-bold text-yellow-600">{summary.data.totalLate}</div>
+            <div className="text-xs text-slate-400 mt-1">This month</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div className="text-sm font-semibold text-slate-500 mb-1">Total Absent/Early</div>
+            <div className="text-3xl font-bold text-red-600">{summary.data.totalEarlyLeave + summary.data.totalAbsent}</div>
+            <div className="text-xs text-slate-400 mt-1">This month</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div className="text-sm font-semibold text-slate-500 mb-1">Working Hours</div>
+            <div className="text-3xl font-bold text-blue-600">{summary.data.totalWorkingHours}h</div>
+            <div className="text-xs text-slate-400 mt-1">This month</div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-8">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-2">
+            <ListChecks size={18} className="text-slate-500" />
+            <h3 className="font-semibold text-slate-800">Recent Attendance Logs</h3>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm">
+              <CalendarIcon size={16} className="text-slate-400" />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="border-none bg-transparent outline-none text-sm text-slate-600 w-32" />
+              <span className="text-slate-300">-</span>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="border-none bg-transparent outline-none text-sm text-slate-600 w-32" />
+              {(startDate || endDate) && <button onClick={() => { setStartDate(''); setEndDate(''); }} className="text-slate-400 hover:text-slate-700 p-1"><X size={14}/></button>}
+            </div>
+            <button onClick={handleExport} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold shadow-sm">
+              <Download size={16} />
+              Export
+            </button>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Employee</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Date</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Location</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Photo</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Clock In</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Clock Out</th>
+                <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12">
+                    <div className="flex flex-col items-center justify-center text-slate-400 space-y-4">
+                      <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+                      <p>Loading records...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-red-500 font-medium">
+                    {(error as any)?.response?.data?.message || (error as any)?.message || 'Failed to load data.'}
+                  </td>
+                </tr>
+              ) : !data?.data?.data || data.data.data.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-16">
+                    <div className="flex flex-col items-center justify-center text-slate-400 space-y-3">
+                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+                        <ListChecks size={32} className="text-slate-300" />
+                      </div>
+                      <p className="text-slate-500 font-medium">No attendance records found</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                data.data.data.map((att: any) => (
+                  <tr key={att.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900">{att.employeeName}</td>
+                    <td className="px-6 py-4 text-slate-600">{new Date(att.clockIn).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5 text-slate-600 text-xs max-w-[150px] truncate" title={att.locationName}>
+                        <MapPinned size={12} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{att.locationName || '-'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {att.photoUrl ? (
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
+                          <img src={`http://localhost:5000${att.photoUrl}`} alt="Attendance" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-300">
+                          <UserCircle size={20} />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-blue-600 font-mono text-xs font-semibold">{new Date(att.clockIn).toLocaleTimeString()}</td>
+                    <td className="px-6 py-4 text-slate-600 font-mono text-xs font-semibold">{att.clockOut ? new Date(att.clockOut).toLocaleTimeString() : '-'}</td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(att.status)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};

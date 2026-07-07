@@ -1,0 +1,11 @@
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\bin\Debug\net8.0\EMS.Domain.deps.json
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\bin\Debug\net8.0\EMS.Domain.dll
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\bin\Debug\net8.0\EMS.Domain.pdb
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\EMS.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\EMS.Domain.AssemblyInfoInputs.cache
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\EMS.Domain.AssemblyInfo.cs
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\EMS.Domain.csproj.CoreCompileInputs.cache
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\EMS.Domain.dll
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\refint\EMS.Domain.dll
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\EMS.Domain.pdb
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Domain\obj\Debug\net8.0\ref\EMS.Domain.dll

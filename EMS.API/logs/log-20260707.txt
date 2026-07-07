@@ -1,0 +1,7 @@
+2026-07-07 14:14:15.339 +07:00 [INF] HTTP OPTIONS /api/v1/positions responded 204 in 0.0136 ms
+2026-07-07 14:14:15.339 +07:00 [INF] HTTP OPTIONS /api/v1/Employees responded 204 in 0.0430 ms
+2026-07-07 14:14:15.339 +07:00 [INF] HTTP OPTIONS /api/v1/departments responded 204 in 0.0126 ms
+2026-07-07 14:14:15.364 +07:00 [INF] HTTP GET /api/v1/Employees responded 401 in 13.3962 ms
+2026-07-07 14:14:15.366 +07:00 [INF] HTTP GET /api/v1/positions responded 401 in 15.6712 ms
+2026-07-07 14:14:15.368 +07:00 [INF] HTTP GET /api/v1/departments responded 401 in 17.7291 ms
+2026-07-07 14:14:15.385 +07:00 [INF] HTTP OPTIONS /api/v1/Auth/refresh-token responded 204 in 0.0322 ms

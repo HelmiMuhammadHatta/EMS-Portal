@@ -1,0 +1,15 @@
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\bin\Debug\net8.0\EMS.Application.deps.json
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\bin\Debug\net8.0\EMS.Application.dll
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\bin\Debug\net8.0\EMS.Application.pdb
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\bin\Debug\net8.0\EMS.Domain.dll
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\bin\Debug\net8.0\EMS.Domain.pdb
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Application.csproj.AssemblyReference.cache
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Application.AssemblyInfoInputs.cache
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Application.AssemblyInfo.cs
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Application.csproj.CoreCompileInputs.cache
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Appl.49CE4691.Up2Date
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Application.dll
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\refint\EMS.Application.dll
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\EMS.Application.pdb
+C:\RBAC&Auth\EmployeeManagementSystem\EMS.Application\obj\Debug\net8.0\ref\EMS.Application.dll
