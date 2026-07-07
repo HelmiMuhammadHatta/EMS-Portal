@@ -5,3 +5,9 @@
 2026-07-07 14:14:15.366 +07:00 [INF] HTTP GET /api/v1/positions responded 401 in 15.6712 ms
 2026-07-07 14:14:15.368 +07:00 [INF] HTTP GET /api/v1/departments responded 401 in 17.7291 ms
 2026-07-07 14:14:15.385 +07:00 [INF] HTTP OPTIONS /api/v1/Auth/refresh-token responded 204 in 0.0322 ms
+2026-07-07 14:14:17.105 +07:00 [INF] HTTP POST /api/v1/Auth/refresh-token responded 200 in 1705.8334 ms
+2026-07-07 14:14:17.118 +07:00 [INF] HTTP POST /api/v1/Auth/refresh-token responded 200 in 1713.2797 ms
+2026-07-07 14:14:17.158 +07:00 [INF] HTTP GET /api/v1/positions responded 200 in 3.6502 ms
+2026-07-07 14:14:17.159 +07:00 [INF] HTTP POST /api/v1/Auth/refresh-token responded 200 in 1767.6938 ms
+2026-07-07 14:14:17.159 +07:00 [INF] HTTP GET /api/v1/departments responded 200 in 2.6388 ms
+2026-07-07 14:14:17.183 +07:00 [INF] HTTP GET /api/v1/Employees responded 200 in 6.6144 ms

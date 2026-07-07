@@ -1,0 +1,33 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+appsettings.Development.json
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.local
