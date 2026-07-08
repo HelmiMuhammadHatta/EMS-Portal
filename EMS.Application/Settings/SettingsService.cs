@@ -58,7 +58,8 @@ public class PositionService : IPositionService
     public async Task<List<PositionDto>> GetAllAsync()
     {
         return await _context.Positions
-            .Select(p => new PositionDto { Id = p.Id, Name = p.Name, Level = p.Level })
+            .Include(p => p.Department)
+            .Select(p => new PositionDto { Id = p.Id, Name = p.Name, Level = p.Level, DepartmentId = p.DepartmentId, DepartmentName = p.Department != null ? p.Department.Name : null })
             .ToListAsync();
     }
 
@@ -69,13 +70,14 @@ public class PositionService : IPositionService
             Id = Guid.NewGuid(),
             Name = request.Name,
             Level = request.Level,
+            DepartmentId = request.DepartmentId,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Positions.Add(pos);
         await _context.SaveChangesAsync();
 
-        return new PositionDto { Id = pos.Id, Name = pos.Name, Level = pos.Level };
+        return new PositionDto { Id = pos.Id, Name = pos.Name, Level = pos.Level, DepartmentId = pos.DepartmentId };
     }
 
     public async Task DeleteAsync(Guid id)

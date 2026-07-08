@@ -59,6 +59,13 @@ public class EmsDbContext : DbContext, IApplicationDbContext
             .WithMany(p => p.RolePermissions)
             .HasForeignKey(rp => rp.PermissionId);
 
+        // Position -> Department (Nullable)
+        modelBuilder.Entity<Position>()
+            .HasOne(p => p.Department)
+            .WithMany()
+            .HasForeignKey(p => p.DepartmentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // 3. User -> Employee (One-to-One)
         modelBuilder.Entity<Employee>()
             .HasOne(e => e.User)

@@ -61,9 +61,19 @@ public class LeaveService : ILeaveService
         return allowedIds.ToList();
     }
 
-    public async Task<IEnumerable<LeaveTypeResponse>> GetLeaveTypesAsync()
+    public async Task<IEnumerable<LeaveTypeResponse>> GetLeaveTypesAsync(Guid? employeeId = null)
     {
         var types = await _context.LeaveTypes.ToListAsync();
+
+        if (employeeId.HasValue)
+        {
+            var employee = await _context.Employees.FindAsync(employeeId.Value);
+            if (employee != null)
+            {
+                types = types.Where(t => t.EligibleGender == null || t.EligibleGender == employee.Gender).ToList();
+            }
+        }
+
         return types.Select(t => new LeaveTypeResponse
         {
             Id = t.Id,
@@ -136,6 +146,12 @@ public class LeaveService : ILeaveService
     {
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == requesterUserId);
         if (employee == null) throw new Exception("Employee profile not found");
+
+        var leaveType = await _context.LeaveTypes.FindAsync(request.LeaveTypeId);
+        if (leaveType == null) throw new Exception("Invalid Leave Type");
+
+        if (leaveType.EligibleGender.HasValue && leaveType.EligibleGender != employee.Gender)
+            throw new Exception($"Jenis cuti ini hanya tersedia untuk karyawan {leaveType.EligibleGender}");
 
         var reqStartUtc = DateTime.SpecifyKind(request.StartDate, DateTimeKind.Utc);
         var reqEndUtc = DateTime.SpecifyKind(request.EndDate, DateTimeKind.Utc);
@@ -296,6 +312,8 @@ public class LeaveService : ILeaveService
         {
             foreach (var type in leaveTypes)
             {
+                if (type.EligibleGender != null && type.EligibleGender != emp.Gender) continue;
+
                 if (!existingBalances.Any(b => b.EmployeeId == emp.Id && b.LeaveTypeId == type.Id))
                 {
                     int totalDays = type.DefaultDaysPerYear;

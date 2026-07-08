@@ -108,7 +108,7 @@ export const Settings = () => {
     if (activeTab === 'departments') {
       createDeptMutation.mutate({ name: data.name });
     } else if (activeTab === 'positions') {
-      createPosMutation.mutate({ name: data.name, level: Number(data.level) });
+      createPosMutation.mutate({ name: data.name, level: Number(data.level), departmentId: data.departmentId || null });
     } else if (activeTab === 'roles') {
       createRoleMutation.mutate({ name: data.name });
     }
@@ -195,6 +195,7 @@ export const Settings = () => {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Name</th>
+                {activeTab === 'positions' && <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Department</th>}
                 {activeTab === 'positions' && <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Level</th>}
                 {activeTab === 'permissions' && <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Description</th>}
                 {activeTab !== 'permissions' && <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-xs text-right">Actions</th>}
@@ -222,11 +223,18 @@ export const Settings = () => {
                 loadingPos ? (
                   <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-400">Loading positions...</td></tr>
                 ) : positions?.length === 0 ? (
-                  <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-400">No positions found</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No positions found</td></tr>
                 ) : (
                   positions?.map((pos: any) => (
                     <tr key={pos.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-900">{pos.name}</td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {pos.departmentName ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">{pos.departmentName}</span>
+                        ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Executive</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-slate-600">Level {pos.level}</td>
                       <td className="px-6 py-4 text-right">
                         <button onClick={() => handleDelete(pos.id)} className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors">
@@ -331,10 +339,21 @@ export const Settings = () => {
                   <input name="name" type="text" required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
                 </div>
                 {activeTab === 'positions' && (
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Level</label>
-                    <input name="level" type="number" required min="1" className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
+                      <select name="departmentId" className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                        <option value="">-- No Department (Executive) --</option>
+                        {departments?.map((d: any) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Level</label>
+                      <input name="level" type="number" required min="1" className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
+                    </div>
+                  </>
                 )}
                 <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
                   <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border border-slate-200 bg-white rounded-lg text-slate-600 hover:bg-slate-50 font-medium transition-colors">Cancel</button>

@@ -48,6 +48,7 @@ api.interceptors.response.use(
         const user = {
             id: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
             email: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'],
+            employeeId: payload['employeeId'],
             role: payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
             permissions: typeof payload.permissions === 'string' ? [payload.permissions] : (payload.permissions || [])
         };

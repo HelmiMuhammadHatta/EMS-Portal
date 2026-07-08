@@ -25,9 +25,9 @@ public class LeavesController : ControllerBase
     private bool IsRequesterAdmin() => User.FindFirstValue(ClaimTypes.Role) == "Admin";
 
     [HttpGet("leave-types")]
-    public async Task<IActionResult> GetLeaveTypes()
+    public async Task<IActionResult> GetLeaveTypes([FromQuery] Guid? employeeId)
     {
-        var result = await _leaveService.GetLeaveTypesAsync();
+        var result = await _leaveService.GetLeaveTypesAsync(employeeId);
         return Ok(ApiResponse<IEnumerable<LeaveTypeResponse>>.SuccessResponse(result));
     }
 
@@ -45,8 +45,15 @@ public class LeavesController : ControllerBase
         if (!validationResult.IsValid)
             return BadRequest(ApiResponse<object>.FailureResponse("Validation Failed", validationResult.Errors.Select(e => e.ErrorMessage).ToList()));
 
-        var id = await _leaveService.CreateLeaveRequestAsync(request, GetRequesterId());
-        return Ok(ApiResponse<object>.SuccessResponse(new { Id = id }, "Leave request created successfully."));
+        try
+        {
+            var id = await _leaveService.CreateLeaveRequestAsync(request, GetRequesterId());
+            return Ok(ApiResponse<object>.SuccessResponse(new { Id = id }, "Leave request created successfully."));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<object>.FailureResponse(ex.Message));
+        }
     }
 
     [Authorize(Policy = "leave.approve")]

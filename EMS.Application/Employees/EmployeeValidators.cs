@@ -11,6 +11,7 @@ public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRe
         RuleFor(x => x.FullName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.DepartmentId).NotEmpty();
         RuleFor(x => x.PositionId).NotEmpty();
+        RuleFor(x => x.Gender).NotEmpty().IsEnumName(typeof(Gender), caseSensitive: false);
         RuleFor(x => x.HireDate).NotEmpty();
     }
 }
@@ -22,6 +23,7 @@ public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRe
         RuleFor(x => x.FullName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.DepartmentId).NotEmpty();
         RuleFor(x => x.PositionId).NotEmpty();
+        RuleFor(x => x.Gender).NotEmpty().IsEnumName(typeof(Gender), caseSensitive: false);
         RuleFor(x => x.Status).NotEmpty().IsEnumName(typeof(EmployeeStatus), caseSensitive: false);
     }
 }

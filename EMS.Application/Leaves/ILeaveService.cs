@@ -7,7 +7,7 @@ namespace EMS.Application.Leaves;
 
 public interface ILeaveService
 {
-    Task<IEnumerable<LeaveTypeResponse>> GetLeaveTypesAsync();
+    Task<IEnumerable<LeaveTypeResponse>> GetLeaveTypesAsync(Guid? employeeId = null);
     Task<PaginatedResponse<LeaveRequestResponse>> GetLeaveRequestsAsync(LeaveRequestListQuery query, Guid requesterUserId, bool isRequesterAdmin);
     Task<Guid> CreateLeaveRequestAsync(CreateLeaveRequest request, Guid requesterUserId);
     Task ApproveLeaveRequestAsync(Guid id, Guid requesterUserId, bool isRequesterAdmin);

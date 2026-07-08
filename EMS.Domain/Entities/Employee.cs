@@ -15,6 +15,7 @@ public class Employee
     public Guid PositionId { get; set; }
     public Position Position { get; set; } = null!;
     public string FullName { get; set; } = null!;
+    public Gender? Gender { get; set; }
     public DateTime HireDate { get; set; }
     public EmployeeStatus Status { get; set; }
     public bool IsDeleted { get; set; }

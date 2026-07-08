@@ -123,6 +123,7 @@ public class EmployeeService : IEmployeeService
                 Id = e.Id,
                 FullName = e.FullName,
                 Email = e.User?.Email ?? "",
+                Gender = e.Gender?.ToString(),
                 DepartmentName = e.Department?.Name ?? "",
                 PositionName = e.Position?.Name ?? "",
                 Status = e.Status.ToString(),
@@ -213,6 +214,7 @@ public class EmployeeService : IEmployeeService
             Id = Guid.NewGuid(),
             UserId = user.Id,
             FullName = request.FullName,
+            Gender = string.IsNullOrEmpty(request.Gender) ? null : Enum.Parse<Gender>(request.Gender, true),
             DepartmentId = request.DepartmentId,
             PositionId = request.PositionId,
             ManagerId = request.ManagerId,
@@ -258,6 +260,7 @@ public class EmployeeService : IEmployeeService
         }
 
         employee.FullName = request.FullName;
+        if (!string.IsNullOrEmpty(request.Gender)) employee.Gender = Enum.Parse<Gender>(request.Gender, true);
         employee.DepartmentId = request.DepartmentId;
         employee.PositionId = request.PositionId;
         employee.ManagerId = request.ManagerId;

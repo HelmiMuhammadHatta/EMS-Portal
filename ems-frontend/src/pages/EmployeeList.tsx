@@ -17,6 +17,8 @@ export const EmployeeList = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>(null);
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('');
+  const [selectedPosId, setSelectedPosId] = useState<string>('');
   const queryClient = useQueryClient();
 
   const { data: depts } = useQuery({ queryKey: ['departments'], queryFn: departmentService.getAll });
@@ -132,7 +134,7 @@ export const EmployeeList = () => {
             {positions?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm shadow-blue-200 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-200 font-medium transition-all shrink-0">
+        <button onClick={() => { setShowModal(true); setSelectedDeptId(''); setSelectedPosId(''); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm shadow-blue-200 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-200 font-medium transition-all shrink-0">
           <Plus size={18} />
           Add Employee
         </button>
@@ -208,7 +210,7 @@ export const EmployeeList = () => {
                         <Link to={`/employees/${emp.id}`} className="text-slate-500 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors" title="View Details">
                           <Eye size={16} />
                         </Link>
-                        <button onClick={() => { setSelectedEmployeeId(emp.id); setEditData(emp); setShowEditModal(true); }} className="text-slate-500 hover:text-orange-600 p-1.5 rounded-md hover:bg-orange-50 transition-colors" title="Edit Employee">
+                        <button onClick={() => { setSelectedEmployeeId(emp.id); setEditData(emp); setSelectedDeptId(emp.departmentId); setSelectedPosId(emp.positionId); setShowEditModal(true); }} className="text-slate-500 hover:text-orange-600 p-1.5 rounded-md hover:bg-orange-50 transition-colors" title="Edit Employee">
                           <Edit size={16} />
                         </button>
                         <button onClick={() => { setSelectedEmployeeId(emp.id); setShowPasswordModal(true); }} className="text-slate-500 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors" title="Change Password">
@@ -272,19 +274,42 @@ export const EmployeeList = () => {
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name</label>
                     <input name="fullName" placeholder="John Doe" required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
                 </div>
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Gender</label>
+                    <select name="gender" required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Laki-laki (Male)</option>
+                        <option value="Female">Perempuan (Female)</option>
+                    </select>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
-                        <select name="departmentId" required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                        <select name="departmentId" required value={selectedDeptId} onChange={(e) => { setSelectedDeptId(e.target.value); setSelectedPosId(''); }} className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
                             <option value="">Select Department</option>
                             {depts?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                         </select>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Position</label>
-                        <select name="positionId" required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
-                            <option value="">Select Position</option>
-                            {positions?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <select name="positionId" required value={selectedPosId} onChange={(e) => setSelectedPosId(e.target.value)} disabled={!selectedDeptId} className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all disabled:opacity-50">
+                            {!selectedDeptId && <option value="">Pilih Department terlebih dahulu</option>}
+                            {selectedDeptId && <option value="">Select Position</option>}
+                            {selectedDeptId && positions && (() => {
+                                const selectedDeptName = depts?.find((d: any) => d.id === selectedDeptId)?.name || 'Department';
+                                const deptPositions = positions.filter((p: any) => String(p.departmentId) === String(selectedDeptId)).sort((a: any, b: any) => a.level - b.level);
+                                const execPositions = positions.filter((p: any) => p.departmentId === null).sort((a: any, b: any) => a.level - b.level);
+                                return (
+                                    <>
+                                        <optgroup label={`Posisi ${selectedDeptName}`}>
+                                            {deptPositions.map((p: any) => <option key={p.id} value={p.id}>{p.name} (Level {p.level})</option>)}
+                                        </optgroup>
+                                        <optgroup label="Posisi Eksekutif">
+                                            {execPositions.map((p: any) => <option key={p.id} value={p.id}>{p.name} (Level {p.level})</option>)}
+                                        </optgroup>
+                                    </>
+                                );
+                            })()}
                         </select>
                     </div>
                 </div>
@@ -323,17 +348,41 @@ export const EmployeeList = () => {
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name</label>
                     <input name="fullName" defaultValue={editData.fullName} required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
                 </div>
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Gender</label>
+                    <select name="gender" defaultValue={editData.gender || ''} required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Laki-laki (Male)</option>
+                        <option value="Female">Perempuan (Female)</option>
+                    </select>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
-                        <select name="departmentId" defaultValue={editData.departmentId} required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                        <select name="departmentId" value={selectedDeptId} onChange={(e) => { setSelectedDeptId(e.target.value); setSelectedPosId(''); }} required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
                             {depts?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                         </select>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Position</label>
-                        <select name="positionId" defaultValue={editData.positionId} required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
-                            {positions?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <select name="positionId" value={selectedPosId} onChange={(e) => setSelectedPosId(e.target.value)} disabled={!selectedDeptId} required className="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all disabled:opacity-50">
+                            {!selectedDeptId && <option value="">Pilih Department terlebih dahulu</option>}
+                            {selectedDeptId && <option value="">Select Position</option>}
+                            {selectedDeptId && positions && (() => {
+                                const selectedDeptName = depts?.find((d: any) => d.id === selectedDeptId)?.name || 'Department';
+                                const deptPositions = positions.filter((p: any) => String(p.departmentId) === String(selectedDeptId)).sort((a: any, b: any) => a.level - b.level);
+                                const execPositions = positions.filter((p: any) => p.departmentId === null).sort((a: any, b: any) => a.level - b.level);
+                                return (
+                                    <>
+                                        <optgroup label={`Posisi ${selectedDeptName}`}>
+                                            {deptPositions.map((p: any) => <option key={p.id} value={p.id}>{p.name} (Level {p.level})</option>)}
+                                        </optgroup>
+                                        <optgroup label="Posisi Eksekutif">
+                                            {execPositions.map((p: any) => <option key={p.id} value={p.id}>{p.name} (Level {p.level})</option>)}
+                                        </optgroup>
+                                    </>
+                                );
+                            })()}
                         </select>
                     </div>
                 </div>

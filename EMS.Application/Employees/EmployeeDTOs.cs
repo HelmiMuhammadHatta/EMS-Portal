@@ -25,6 +25,7 @@ public class EmployeeResponse
     public Guid Id { get; set; }
     public string FullName { get; set; } = null!;
     public string Email { get; set; } = null!;
+    public string? Gender { get; set; }
     public string DepartmentName { get; set; } = null!;
     public string PositionName { get; set; } = null!;
     public string Status { get; set; } = null!;
@@ -50,6 +51,7 @@ public class CreateEmployeeRequest
 {
     public string Email { get; set; } = null!;
     public string FullName { get; set; } = null!;
+    public string? Gender { get; set; }
     public Guid DepartmentId { get; set; }
     public Guid PositionId { get; set; }
     public Guid? ManagerId { get; set; }
@@ -59,6 +61,7 @@ public class CreateEmployeeRequest
 public class UpdateEmployeeRequest
 {
     public string FullName { get; set; } = null!;
+    public string? Gender { get; set; }
     public Guid DepartmentId { get; set; }
     public Guid PositionId { get; set; }
     public Guid? ManagerId { get; set; }

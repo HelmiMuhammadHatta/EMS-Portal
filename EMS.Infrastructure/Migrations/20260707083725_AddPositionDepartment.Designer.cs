@@ -3,6 +3,7 @@ using System;
 using EMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EMS.Infrastructure.Migrations
 {
     [DbContext(typeof(EmsDbContext))]
-    partial class EmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260707083725_AddPositionDepartment")]
+    partial class AddPositionDepartment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -141,9 +144,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int?>("Gender")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime>("HireDate")
                         .HasColumnType("timestamp with time zone");
@@ -292,9 +292,6 @@ namespace EMS.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<int>("DefaultDaysPerYear")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("EligibleGender")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
