@@ -14,6 +14,8 @@ public interface IEmployeeService
     Task<object> GetHierarchyAsync(Guid id, Guid requesterUserId, bool isRequesterAdmin);
     Task UploadDocumentAsync(Guid employeeId, Stream fileStream, string fileName, string documentType, Guid requesterUserId, bool isRequesterAdmin);
     Task<IEnumerable<DocumentResponse>> GetDocumentsAsync(Guid employeeId, Guid requesterUserId, bool isRequesterAdmin);
-    Task<IEnumerable<AuditLog>> GetAuditLogsAsync(Guid employeeId, Guid requesterUserId, bool isRequesterAdmin);
+    Task<(Stream FileStream, string ContentType, string FileName)> DownloadDocumentAsync(Guid employeeId, Guid documentId, Guid requesterUserId, bool isRequesterAdmin);
+    Task DeleteDocumentAsync(Guid employeeId, Guid documentId, Guid requesterUserId, bool isRequesterAdmin);
+    Task<object> GetAuditLogsAsync(Guid employeeId, int page, int pageSize, Guid requesterUserId, bool isRequesterAdmin);
     Task ChangePasswordAsync(Guid id, string newPassword, Guid requesterUserId, bool isRequesterAdmin);
 }

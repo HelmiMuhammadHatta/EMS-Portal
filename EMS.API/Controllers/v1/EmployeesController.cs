@@ -109,10 +109,26 @@ public class EmployeesController : ControllerBase
     }
 
     [Authorize(Policy = "employee.read")]
-    [HttpGet("{id}/audit-log")]
-    public async Task<IActionResult> GetAuditLogs(Guid id)
+    [HttpGet("{id}/documents/{documentId}/download")]
+    public async Task<IActionResult> DownloadDocument(Guid id, Guid documentId)
     {
-        var result = await _employeeService.GetAuditLogsAsync(id, GetRequesterId(), IsRequesterAdmin());
+        var (stream, contentType, fileName) = await _employeeService.DownloadDocumentAsync(id, documentId, GetRequesterId(), IsRequesterAdmin());
+        return File(stream, contentType, fileName);
+    }
+
+    [Authorize(Policy = "employee.write")]
+    [HttpDelete("{id}/documents/{documentId}")]
+    public async Task<IActionResult> DeleteDocument(Guid id, Guid documentId)
+    {
+        await _employeeService.DeleteDocumentAsync(id, documentId, GetRequesterId(), IsRequesterAdmin());
+        return Ok(ApiResponse<object>.SuccessResponse(new { }, "Document deleted successfully."));
+    }
+
+    [Authorize(Policy = "employee.read")]
+    [HttpGet("{id}/audit-log")]
+    public async Task<IActionResult> GetAuditLogs(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var result = await _employeeService.GetAuditLogsAsync(id, page, pageSize, GetRequesterId(), IsRequesterAdmin());
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
 

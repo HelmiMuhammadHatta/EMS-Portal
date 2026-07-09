@@ -13,8 +13,10 @@ export const employeeService = {
   changePassword: (id: string, data: any) => api.put(`/Employees/${id}/password`, data).then(res => res.data),
   getSubordinates: (id: string) => api.get(`/Employees/${id}/subordinates`).then(res => res.data),
   getDocuments: (id: string) => api.get(`/Employees/${id}/documents`).then(res => res.data),
-  getAuditLogs: (id: string) => api.get(`/Employees/${id}/audit-log`).then(res => res.data),
-  uploadDocument: (id: string, formData: FormData) => api.post(`/Employees/${id}/documents`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(res => res.data)
+  uploadDocument: (id: string, formData: FormData, onUploadProgress?: (progressEvent: any) => void) => api.post(`/Employees/${id}/documents`, formData, { headers: { 'Content-Type': 'multipart/form-data' }, onUploadProgress }).then(res => res.data),
+  downloadDocument: (id: string, documentId: string) => api.get(`/Employees/${id}/documents/${documentId}/download`, { responseType: 'blob' }).then(res => res.data),
+  deleteDocument: (id: string, documentId: string) => api.delete(`/Employees/${id}/documents/${documentId}`).then(res => res.data),
+  getAuditLogs: (id: string, page: number = 1, pageSize: number = 10) => api.get(`/Employees/${id}/audit-log?page=${page}&pageSize=${pageSize}`).then(res => res.data)
 };
 
 export const leaveService = {

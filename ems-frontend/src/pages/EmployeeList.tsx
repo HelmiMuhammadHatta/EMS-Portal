@@ -85,7 +85,14 @@ export const EmployeeList = () => {
     if (!selectedEmployeeId) return;
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
-    if (!data.managerId) data.managerId = null;
+    
+    // Preserve managerId from editData if not provided in form
+    if (editData && editData.managerId) {
+      data.managerId = editData.managerId;
+    } else if (!data.managerId) {
+      data.managerId = null as any;
+    }
+    
     updateMutation.mutate({ id: selectedEmployeeId, body: data });
   };
 
@@ -140,7 +147,7 @@ export const EmployeeList = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">

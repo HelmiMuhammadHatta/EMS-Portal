@@ -237,7 +237,7 @@ export const Attendance = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-8">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <ListChecks size={18} className="text-slate-500" />

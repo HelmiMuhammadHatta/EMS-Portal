@@ -117,15 +117,15 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 text-blue-50 opacity-50 group-hover:scale-110 transition-transform">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+          <div className="absolute -right-6 -top-6 text-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
             <Users size={120} />
           </div>
           <div className="relative z-10">
-            <div className="flex items-center gap-2 text-slate-500 font-semibold mb-2">
-              <div className="p-1.5 bg-blue-50 rounded-md">
-                <Users size={18} className="text-blue-500" />
+            <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
+              <div className="p-2.5 bg-blue-100 rounded-xl">
+                <Users size={20} className="text-blue-600" />
               </div>
               <span>Total Employees</span>
             </div>
@@ -136,14 +136,14 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 text-green-50 opacity-50 group-hover:scale-110 transition-transform">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+          <div className="absolute -right-6 -top-6 text-green-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
             <Activity size={120} />
           </div>
           <div className="relative z-10">
-            <div className="flex items-center gap-2 text-slate-500 font-semibold mb-2">
-              <div className="p-1.5 bg-green-50 rounded-md">
-                <Activity size={18} className="text-green-500" />
+            <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
+              <div className="p-2.5 bg-emerald-100 rounded-xl">
+                <Activity size={20} className="text-emerald-600" />
               </div>
               <span>Attendance Rate Today</span>
             </div>
@@ -159,14 +159,14 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 text-yellow-50 opacity-50 group-hover:scale-110 transition-transform">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+          <div className="absolute -right-6 -top-6 text-orange-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
             <CalendarClock size={120} />
           </div>
           <div className="relative z-10">
-            <div className="flex items-center gap-2 text-slate-500 font-semibold mb-2">
-              <div className="p-1.5 bg-yellow-50 rounded-md">
-                <CalendarClock size={18} className="text-yellow-500" />
+            <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
+              <div className="p-2.5 bg-orange-100 rounded-xl">
+                <CalendarClock size={20} className="text-orange-600" />
               </div>
               <span>Pending Leaves</span>
             </div>
@@ -178,21 +178,27 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mt-8">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mt-8">
         <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Rate by Department</h2>
         <div className="h-72 w-full">
           {metrics.chartData.some(d => d.rate > 0) ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={metrics.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={1}/>
+                    <stop offset="95%" stopColor="#1d4ed8" stopOpacity={1}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={{stroke: '#e2e8f0'}} />
                 <YAxis tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
                 <Tooltip 
                   cursor={{fill: '#f8fafc'}} 
-                  contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  formatter={(value) => [`${value}%`, 'Attendance Rate']}
+                  contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '12px'}}
+                  formatter={(value: number, name: string, props: any) => [`${value}% (${props.payload?.name})`, 'Attendance Rate']}
                 />
-                <Bar dataKey="rate" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={60} />
+                <Bar dataKey="rate" fill="url(#colorRate)" radius={[6, 6, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -207,9 +213,9 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         {/* Leave Trend Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
           <h2 className="text-lg font-bold mb-6 text-slate-800">Leave Trend (6 Months)</h2>
           <div className="h-72 w-full">
             {metrics.leaveTrend.some(d => d.total > 0) ? (
@@ -238,7 +244,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Attendance Distribution Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
           <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Status (This Month)</h2>
           <div className="h-72 w-full">
             {metrics.attendanceDistribution.length > 0 ? (

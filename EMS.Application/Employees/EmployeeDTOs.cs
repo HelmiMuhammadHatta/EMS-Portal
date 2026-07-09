@@ -26,7 +26,9 @@ public class EmployeeResponse
     public string FullName { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string? Gender { get; set; }
+    public Guid? DepartmentId { get; set; }
     public string DepartmentName { get; set; } = null!;
+    public Guid? PositionId { get; set; }
     public string PositionName { get; set; } = null!;
     public string Status { get; set; } = null!;
     public string? ManagerName { get; set; }

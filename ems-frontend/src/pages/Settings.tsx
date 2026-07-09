@@ -189,7 +189,7 @@ export const Settings = () => {
             )}
           </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
@@ -290,7 +290,7 @@ export const Settings = () => {
       </div>
       </>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-bold text-slate-800">Edit Permissions for {selectedRole.name}</h2>
             <button onClick={() => setSelectedRole(null)} className="text-slate-500 hover:text-slate-700 bg-slate-50 px-3 py-1.5 rounded-md text-sm font-semibold border border-slate-200">Back</button>

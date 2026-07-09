@@ -129,23 +129,46 @@ public class EmsDbContext : DbContext, IApplicationDbContext
                 ChangedAt = DateTime.UtcNow
             };
 
-            if (entry.State == EntityState.Modified || entry.State == EntityState.Deleted)
+            var oldValues = new Dictionary<string, object?>();
+            var newValues = new Dictionary<string, object?>();
+
+            if (entry.State == EntityState.Added)
             {
-                var oldValues = new Dictionary<string, object?>();
+                foreach (var prop in entry.CurrentValues.Properties)
+                {
+                    newValues[prop.Name] = entry.CurrentValues[prop];
+                }
+                auditLog.NewValue = System.Text.Json.JsonSerializer.Serialize(newValues);
+            }
+            else if (entry.State == EntityState.Deleted)
+            {
                 foreach (var prop in entry.OriginalValues.Properties)
                 {
                     oldValues[prop.Name] = entry.OriginalValues[prop];
                 }
                 auditLog.OldValue = System.Text.Json.JsonSerializer.Serialize(oldValues);
             }
-
-            if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+            else if (entry.State == EntityState.Modified)
             {
-                var newValues = new Dictionary<string, object?>();
-                foreach (var prop in entry.CurrentValues.Properties)
+                foreach (var prop in entry.OriginalValues.Properties)
                 {
-                    newValues[prop.Name] = entry.CurrentValues[prop];
+                    // Skip tracking navigation properties or internal EF fields if any (though these are scalar properties)
+                    var originalValue = entry.OriginalValues[prop];
+                    var currentValue = entry.CurrentValues[prop];
+                    
+                    if (!Equals(originalValue, currentValue))
+                    {
+                        oldValues[prop.Name] = originalValue;
+                        newValues[prop.Name] = currentValue;
+                    }
                 }
+                
+                if (!oldValues.Any())
+                {
+                    continue; // Skip creating audit log if nothing actually changed
+                }
+                
+                auditLog.OldValue = System.Text.Json.JsonSerializer.Serialize(oldValues);
                 auditLog.NewValue = System.Text.Json.JsonSerializer.Serialize(newValues);
             }
 

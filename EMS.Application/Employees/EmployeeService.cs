@@ -124,7 +124,9 @@ public class EmployeeService : IEmployeeService
                 FullName = e.FullName,
                 Email = e.User?.Email ?? "",
                 Gender = e.Gender?.ToString(),
+                DepartmentId = e.DepartmentId,
                 DepartmentName = e.Department?.Name ?? "",
+                PositionId = e.PositionId,
                 PositionName = e.Position?.Name ?? "",
                 Status = e.Status.ToString(),
                 ManagerName = e.Manager?.FullName,
@@ -152,7 +154,9 @@ public class EmployeeService : IEmployeeService
         {
             Id = employee.Id,
             FullName = employee.FullName,
+            DepartmentId = employee.DepartmentId,
             DepartmentName = employee.Department?.Name ?? "",
+            PositionId = employee.PositionId,
             PositionName = employee.Position?.Name ?? "",
             Status = employee.Status.ToString(),
             ManagerName = employee.Manager?.FullName,
@@ -303,7 +307,9 @@ public class EmployeeService : IEmployeeService
             Id = e.Id,
             FullName = e.FullName,
             Email = e.User?.Email ?? "",
+            DepartmentId = e.DepartmentId,
             DepartmentName = e.Department?.Name ?? "",
+            PositionId = e.PositionId,
             PositionName = e.Position?.Name ?? "",
             Status = e.Status.ToString(),
             ManagerName = e.Manager?.FullName,
@@ -357,8 +363,8 @@ public class EmployeeService : IEmployeeService
         if (fileStream.Length > 5 * 1024 * 1024) throw new Exception("File size exceeds 5MB");
 
         var ext = Path.GetExtension(fileName).ToLower();
-        if (ext != ".pdf" && ext != ".jpg" && ext != ".png")
-            throw new Exception("Invalid file type. Only PDF, JPG, PNG are allowed.");
+        if (ext != ".pdf" && ext != ".jpg" && ext != ".jpeg" && ext != ".png")
+            throw new Exception("Invalid file type. Only PDF, JPG, JPEG, PNG are allowed.");
 
         var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "employees", employeeId.ToString());
         if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
@@ -400,15 +406,87 @@ public class EmployeeService : IEmployeeService
         });
     }
 
-    public async Task<IEnumerable<AuditLog>> GetAuditLogsAsync(Guid employeeId, Guid requesterUserId, bool isRequesterAdmin)
+    public async Task<(Stream FileStream, string ContentType, string FileName)> DownloadDocumentAsync(Guid employeeId, Guid documentId, Guid requesterUserId, bool isRequesterAdmin)
     {
         if (!await IsRequesterAllowedAsync(employeeId, requesterUserId, isRequesterAdmin))
             throw new Exception("Forbidden");
 
-        return await _context.AuditLogs
+        var doc = await _context.EmployeeDocuments.FirstOrDefaultAsync(d => d.Id == documentId && d.EmployeeId == employeeId);
+        if (doc == null) throw new Exception("Document not found");
+
+        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var filePath = Path.Combine(uploadDir, doc.FilePath.TrimStart('/'));
+
+        if (!File.Exists(filePath)) throw new Exception("Physical file not found");
+
+        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        var ext = Path.GetExtension(filePath).ToLower();
+        var contentType = ext switch
+        {
+            ".pdf" => "application/pdf",
+            ".jpg" => "image/jpeg",
+            ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            _ => "application/octet-stream"
+        };
+        var fileName = $"{doc.DocumentType}{ext}";
+
+        return (stream, contentType, fileName);
+    }
+
+    public async Task DeleteDocumentAsync(Guid employeeId, Guid documentId, Guid requesterUserId, bool isRequesterAdmin)
+    {
+        if (!await IsRequesterAllowedAsync(employeeId, requesterUserId, isRequesterAdmin))
+            throw new Exception("Forbidden");
+
+        var doc = await _context.EmployeeDocuments.FirstOrDefaultAsync(d => d.Id == documentId && d.EmployeeId == employeeId);
+        if (doc == null) throw new Exception("Document not found");
+
+        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var filePath = Path.Combine(uploadDir, doc.FilePath.TrimStart('/'));
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        _context.EmployeeDocuments.Remove(doc);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<object> GetAuditLogsAsync(Guid employeeId, int page, int pageSize, Guid requesterUserId, bool isRequesterAdmin)
+    {
+        if (!await IsRequesterAllowedAsync(employeeId, requesterUserId, isRequesterAdmin))
+            throw new Exception("Forbidden");
+
+        var query = _context.AuditLogs
             .Where(a => a.TableName == "Employees" && a.RecordId == employeeId.ToString())
-            .OrderByDescending(a => a.ChangedAt)
-            .ToListAsync();
+            .OrderByDescending(a => a.ChangedAt);
+
+        var totalCount = await query.CountAsync();
+        var logs = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        var changedByUsers = logs.Where(l => l.ChangedBy.HasValue).Select(l => l.ChangedBy.Value).Distinct().ToList();
+        var userNames = await _context.Employees
+            .Where(e => changedByUsers.Contains(e.UserId))
+            .ToDictionaryAsync(e => e.UserId, e => e.FullName);
+
+        return new PaginatedResponse<object>
+        {
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+            CurrentPage = page,
+            Data = logs.Select(l => new
+            {
+                Id = l.Id,
+                Action = l.Action,
+                OldValue = l.OldValue,
+                NewValue = l.NewValue,
+                ChangedAt = l.ChangedAt,
+                ChangedBy = l.ChangedBy,
+                ChangedByName = l.ChangedBy.HasValue && userNames.ContainsKey(l.ChangedBy.Value) ? userNames[l.ChangedBy.Value] : "System"
+            })
+        };
     }
 
     public async Task ChangePasswordAsync(Guid id, string newPassword, Guid requesterUserId, bool isRequesterAdmin)

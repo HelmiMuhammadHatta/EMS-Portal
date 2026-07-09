@@ -49,10 +49,10 @@ export const Login = () => {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-100/50 blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden relative z-10 flex flex-col md:flex-row">
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] border border-slate-100 overflow-hidden relative z-10 flex flex-col md:flex-row">
         
         {/* Left Panel: Branding & Illustration */}
-        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-12 flex-col justify-between items-center text-white relative overflow-hidden">
+        <div className="hidden md:flex md:w-[60%] bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 p-12 flex-col justify-between items-center text-white relative overflow-hidden">
           {/* subtle pattern overlay */}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20"></div>
           
@@ -63,15 +63,15 @@ export const Login = () => {
           </div>
           
           <div className="text-center relative z-10 my-8">
-            <svg className="w-48 h-48 mx-auto mb-6 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="3" y1="9" x2="21" y2="9"></line>
-              <line x1="9" y1="21" x2="9" y2="9"></line>
-              <path d="M14 14h2"></path>
-              <path d="M14 17h2"></path>
+            <svg className="w-64 h-64 mx-auto mb-8 opacity-90 drop-shadow-2xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              <polyline points="12 11 15 14 20 9" />
             </svg>
-            <h2 className="text-3xl font-bold mb-3">EMS Portal</h2>
-            <p className="text-blue-100 text-lg font-medium">Kelola tim Anda dengan mudah</p>
+            <h2 className="text-4xl font-extrabold mb-4 tracking-tight leading-tight">Kelola tim Anda <br/>dengan lebih mudah</h2>
+            <p className="text-blue-100 text-lg font-medium max-w-md mx-auto">Tingkatkan produktivitas dan pantau performa seluruh tim dalam satu platform yang terintegrasi dan intuitif.</p>
           </div>
           
           <div className="w-full text-center relative z-10">
@@ -80,7 +80,7 @@ export const Login = () => {
         </div>
 
         {/* Right Panel: Login Form */}
-        <div className="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-white">
+        <div className="w-full md:w-[40%] p-8 sm:p-12 flex flex-col justify-center bg-white">
           <div className="flex justify-center mb-8 md:hidden">
             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <span className="text-white font-bold text-2xl">E</span>
@@ -107,7 +107,6 @@ export const Login = () => {
             <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-sm font-semibold text-slate-700">Password</label>
-                <a href="#" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">Lupa password?</a>
               </div>
               <input 
                 type="password" 
@@ -117,9 +116,12 @@ export const Login = () => {
                 placeholder="Enter your password"
                 required 
               />
+              <div className="flex justify-end mt-2">
+                <a href="#" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">Lupa password?</a>
+              </div>
             </div>
             
-            <div className="pt-2">
+            <div className="pt-4">
               <button 
                 type="submit" 
                 disabled={loading} 
