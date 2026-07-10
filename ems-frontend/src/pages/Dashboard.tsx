@@ -9,11 +9,13 @@ export const Dashboard = () => {
   const { user } = useAuth();
   
   // Greeting based on time
-  const hour = new Date().getHours();
-  let greeting = 'Selamat pagi';
-  if (hour >= 11 && hour < 15) greeting = 'Selamat siang';
-  else if (hour >= 15 && hour < 18) greeting = 'Selamat sore';
-  else if (hour >= 18) greeting = 'Selamat malam';
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 11 && hour < 15) return 'siang';
+    if (hour >= 15 && hour < 18) return 'sore';
+    if (hour >= 18) return 'malam';
+    return 'pagi';
+  };
   
   const todayDateStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   
@@ -22,6 +24,8 @@ export const Dashboard = () => {
     queryFn: () => employeeService.getAll({ page: 1, pageSize: 1000 }),
     enabled: user?.role === 'Admin' || user?.role === 'Manager'
   });
+
+  const displayName = user?.fullName ?? user?.email?.split('@')[0] ?? 'User';
 
   const { data: leavesData } = useQuery({
     queryKey: ['leaves', 'all'],
@@ -99,185 +103,183 @@ export const Dashboard = () => {
       else if (a.status === 'Late') lateCount++;
     });
 
-    // We can estimate absent if we have employees count and working days, but let's just show OnTime and Late for simplicity if Absent is not explicitly tracked as records
     const attendanceDistribution = [
-      { name: 'On Time', value: onTimeCount, color: '#22c55e' },
-      { name: 'Late', value: lateCount, color: '#eab308' }
+      { name: 'On Time', value: onTimeCount, color: '#16a34a' }, // Tailwind green-600 #16a34a
+      { name: 'Late', value: lateCount, color: '#ca8a04' } // Tailwind yellow-600 #ca8a04
     ].filter(d => d.value > 0);
 
     return { totalEmployees, pendingLeaves, attendanceRate, chartData, leaveTrend, attendanceDistribution };
   }, [employeesData, leavesData, attendancesData]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">{greeting}, {user?.name?.split(' ')[0] || 'User'} 👋</h1>
-          <p className="text-sm font-medium text-slate-500 mt-1">{todayDateStr}</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-          <div className="absolute -right-6 -top-6 text-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-            <Users size={120} />
-          </div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
-              <div className="p-2.5 bg-blue-100 rounded-xl">
-                <Users size={20} className="text-blue-600" />
-              </div>
-              <span>Total Employees</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.totalEmployees}</h3>
-              <span className="text-sm font-medium text-slate-400">active</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-          <div className="absolute -right-6 -top-6 text-green-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-            <Activity size={120} />
-          </div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
-              <div className="p-2.5 bg-emerald-100 rounded-xl">
-                <Activity size={20} className="text-emerald-600" />
-              </div>
-              <span>Attendance Rate Today</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-4xl font-bold text-slate-900 tracking-tight">
-                {metrics.chartData.every(d => d.rate === 0) && metrics.attendanceRate === 0 ? '--' : metrics.attendanceRate}%
-              </h3>
-              <span className="text-sm font-medium text-slate-400">present</span>
-            </div>
-            {metrics.chartData.every(d => d.rate === 0) && metrics.attendanceRate === 0 && (
-              <p className="text-xs text-slate-400 mt-2 font-medium">Belum ada data absensi hari ini</p>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-          <div className="absolute -right-6 -top-6 text-orange-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-            <CalendarClock size={120} />
-          </div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
-              <div className="p-2.5 bg-orange-100 rounded-xl">
-                <CalendarClock size={20} className="text-orange-600" />
-              </div>
-              <span>Pending Leaves</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.pendingLeaves}</h3>
-              <span className="text-sm font-medium text-slate-400">requests</span>
-            </div>
+    <div className="flex flex-col min-h-full">
+      {/* Page Header */}
+      <div className="bg-white px-8 py-6 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto w-full">
+          <h1 className="text-2xl font-bold text-slate-800">Selamat {getGreeting()}, {displayName} 👋</h1>
+          <div className="text-xs text-slate-500 flex items-center gap-1 mt-1 font-medium">
+            <span>{todayDateStr}</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mt-8">
-        <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Rate by Department</h2>
-        <div className="h-72 w-full">
-          {metrics.chartData.some(d => d.rate > 0) ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={metrics.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={1}/>
-                    <stop offset="95%" stopColor="#1d4ed8" stopOpacity={1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={{stroke: '#e2e8f0'}} />
-                <YAxis tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
-                <Tooltip 
-                  cursor={{fill: '#f8fafc'}} 
-                  contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '12px'}}
-                  formatter={(value: number, name: string, props: any) => [`${value}% (${props.payload?.name})`, 'Attendance Rate']}
-                />
-                <Bar dataKey="rate" fill="url(#colorRate)" radius={[6, 6, 0, 0]} maxBarSize={60} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-              <div className="p-4 bg-slate-50 rounded-full mb-3">
-                <Activity size={32} className="text-slate-300" />
-              </div>
-              <p className="font-medium text-slate-500">Belum ada data kehadiran untuk hari ini</p>
-              <p className="text-sm mt-1">Data grafik akan muncul setelah karyawan melakukan clock-in.</p>
+      <div className="p-8 max-w-7xl mx-auto w-full flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+            <div className="absolute -right-6 -top-6 text-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+              <Users size={120} />
             </div>
-          )}
-        </div>
-      </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <Users size={20} className="text-blue-600" />
+                </div>
+                <span>Total Employees</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.totalEmployees}</h3>
+                <span className="text-sm font-medium text-slate-400">active</span>
+              </div>
+            </div>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        {/* Leave Trend Chart */}
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold mb-6 text-slate-800">Leave Trend (6 Months)</h2>
+          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+            <div className="absolute -right-6 -top-6 text-green-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+              <Activity size={120} />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
+                <div className="p-2 bg-green-100 rounded-full">
+                  <Activity size={20} className="text-green-600" />
+                </div>
+                <span>Attendance Rate Today</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">
+                  {metrics.chartData.every(d => d.rate === 0) && metrics.attendanceRate === 0 ? '--' : metrics.attendanceRate}%
+                </h3>
+                <span className="text-sm font-medium text-slate-400">present</span>
+              </div>
+              {metrics.chartData.every(d => d.rate === 0) && metrics.attendanceRate === 0 && (
+                <p className="text-xs text-slate-400 mt-2 font-medium">Belum ada data absensi hari ini</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+            <div className="absolute -right-6 -top-6 text-yellow-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+              <CalendarClock size={120} />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
+                <div className="p-2 bg-yellow-100 rounded-full">
+                  <CalendarClock size={20} className="text-yellow-600" />
+                </div>
+                <span>Pending Leaves</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.pendingLeaves}</h3>
+                <span className="text-sm font-medium text-slate-400">requests</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-8 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 mt-6">
+          <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Rate by Department</h2>
           <div className="h-72 w-full">
-            {metrics.leaveTrend.some(d => d.total > 0) ? (
+            {metrics.chartData.some(d => d.rate > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={metrics.leaveTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={metrics.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="name" tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={{stroke: '#e2e8f0'}} />
-                  <YAxis tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
                   <Tooltip 
-                    cursor={{stroke: '#e2e8f0', strokeWidth: 2}} 
-                    contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    cursor={{fill: '#f8fafc'}} 
+                    contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '12px'}}
+                    formatter={(value: number, name: string, props: any) => [`${value}% (${props.payload?.name})`, 'Attendance Rate']}
                   />
-                  <Line type="monotone" dataKey="total" name="Requests" stroke="#8b5cf6" strokeWidth={3} dot={{r: 4, fill: '#8b5cf6', strokeWidth: 0}} activeDot={{r: 6}} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                <div className="p-4 bg-slate-50 rounded-full mb-3">
-                  <CalendarClock size={32} className="text-slate-300" />
-                </div>
-                <p className="font-medium text-slate-500">Belum ada pengajuan cuti</p>
-                <p className="text-sm mt-1">Data tren akan muncul setelah ada pengajuan cuti.</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Attendance Distribution Chart */}
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Status (This Month)</h2>
-          <div className="h-72 w-full">
-            {metrics.attendanceDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={metrics.attendanceDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {metrics.attendanceDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
+                  <Bar dataKey="rate" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                 <div className="p-4 bg-slate-50 rounded-full mb-3">
                   <Activity size={32} className="text-slate-300" />
                 </div>
-                <p className="font-medium text-slate-500">Belum ada data kehadiran bulan ini</p>
-                <p className="text-sm mt-1">Diagram akan muncul setelah karyawan melakukan clock-in.</p>
+                <p className="font-medium text-slate-500">Belum ada data kehadiran untuk hari ini</p>
+                <p className="text-sm mt-1">Data grafik akan muncul setelah karyawan melakukan clock-in.</p>
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {/* Leave Trend Chart */}
+          <div className="bg-white p-8 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200">
+            <h2 className="text-lg font-bold mb-6 text-slate-800">Leave Trend (6 Months)</h2>
+            <div className="h-72 w-full">
+              {metrics.leaveTrend.some(d => d.total > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={metrics.leaveTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={{stroke: '#e2e8f0'}} />
+                    <YAxis tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip 
+                      cursor={{stroke: '#e2e8f0', strokeWidth: 2}} 
+                      contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    />
+                    <Line type="monotone" dataKey="total" name="Requests" stroke="#2563eb" strokeWidth={3} dot={{r: 4, fill: '#2563eb', strokeWidth: 0}} activeDot={{r: 6}} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                  <div className="p-4 bg-slate-50 rounded-full mb-3">
+                    <CalendarClock size={32} className="text-slate-300" />
+                  </div>
+                  <p className="font-medium text-slate-500">Belum ada pengajuan cuti</p>
+                  <p className="text-sm mt-1">Data tren akan muncul setelah ada pengajuan cuti.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Attendance Distribution Chart */}
+          <div className="bg-white p-8 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200">
+            <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Status (This Month)</h2>
+            <div className="h-72 w-full">
+              {metrics.attendanceDistribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={metrics.attendanceDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={70}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {metrics.attendanceDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                  <div className="p-4 bg-slate-50 rounded-full mb-3">
+                    <Activity size={32} className="text-slate-300" />
+                  </div>
+                  <p className="font-medium text-slate-500">Belum ada data kehadiran bulan ini</p>
+                  <p className="text-sm mt-1">Diagram akan muncul setelah karyawan melakukan clock-in.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

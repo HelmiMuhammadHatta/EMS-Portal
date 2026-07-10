@@ -191,6 +191,7 @@ public class AuthService : IAuthService
             user.Id,
             user.Email,
             EmployeeId = employee?.Id,
+            FullName = employee?.FullName,
             Role = user.Role.Name,
             Permissions = user.Role.RolePermissions.Select(rp => rp.Permission.Name).ToList()
         };

@@ -11,6 +11,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using EMS.API.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -145,6 +146,19 @@ using (var scope = app.Services.CreateScope())
         // Also re-initialize leave balances so they get the gender-specific ones if applicable
         var leaveService = scope.ServiceProvider.GetRequiredService<EMS.Application.Leaves.ILeaveService>();
         await leaveService.InitializeLeaveBalancesAsync(DateTime.UtcNow.Year);
+    }
+    
+    // TEMPORARY: Update user "dinda123" to have a proper FullName if she exists
+    var dindaUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email.Contains("dinda123"));
+    if (dindaUser != null)
+    {
+        var dindaEmp = await dbContext.Employees.FirstOrDefaultAsync(e => e.UserId == dindaUser.Id);
+        if (dindaEmp != null && (string.IsNullOrEmpty(dindaEmp.FullName) || dindaEmp.FullName == "dinda123" || dindaEmp.FullName.Contains("dinda123")))
+        {
+            dindaEmp.FullName = "Dinda Permatasari";
+            if (!dindaEmp.Gender.HasValue) dindaEmp.Gender = EMS.Domain.Enums.Gender.Female;
+            await dbContext.SaveChangesAsync(default);
+        }
     }
 }
 

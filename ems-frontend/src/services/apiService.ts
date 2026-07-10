@@ -2,6 +2,7 @@ import { api } from '../lib/axios';
 
 export const authService = {
   login: (data: any) => api.post('/Auth/login', data).then(res => res.data),
+  getMe: () => api.get('/Auth/me').then(res => res.data),
 };
 
 export const employeeService = {

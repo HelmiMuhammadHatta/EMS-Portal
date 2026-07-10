@@ -25,7 +25,7 @@ export const Login = () => {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
 
-      const user = {
+      const baseUser: any = {
           id: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
           email: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'],
           employeeId: payload['employeeId'],
@@ -33,7 +33,20 @@ export const Login = () => {
           permissions: typeof payload.permissions === 'string' ? [payload.permissions] : (payload.permissions || [])
       };
 
-      setAuth(accessToken, refreshToken, user);
+      // Set auth first so that axios interceptor can use the token for getMe
+      setAuth(accessToken, refreshToken, baseUser);
+
+      try {
+        const meRes = await authService.getMe();
+        if (meRes.data && meRes.data.fullName) {
+          baseUser.fullName = meRes.data.fullName;
+          // Update auth with the full name
+          setAuth(accessToken, refreshToken, baseUser);
+        }
+      } catch (e) {
+        console.error("Failed to fetch user profile", e);
+      }
+
       toast.success("Login successful!");
       navigate('/dashboard');
     } catch (err: any) {
@@ -49,7 +62,7 @@ export const Login = () => {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-100/50 blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] border border-slate-100 overflow-hidden relative z-10 flex flex-col md:flex-row">
+      <div className="w-full max-w-5xl bg-white rounded-xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] border border-slate-100 overflow-hidden relative z-10 flex flex-col md:flex-row">
         
         {/* Left Panel: Branding & Illustration */}
         <div className="hidden md:flex md:w-[60%] bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 p-12 flex-col justify-between items-center text-white relative overflow-hidden">
@@ -57,7 +70,7 @@ export const Login = () => {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20"></div>
           
           <div className="w-full flex justify-start relative z-10">
-             <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg border border-white/30">
+             <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-md flex items-center justify-center shadow-lg border border-white/30">
                <span className="text-white font-bold text-xl">E</span>
              </div>
           </div>
@@ -82,7 +95,7 @@ export const Login = () => {
         {/* Right Panel: Login Form */}
         <div className="w-full md:w-[40%] p-8 sm:p-12 flex flex-col justify-center bg-white">
           <div className="flex justify-center mb-8 md:hidden">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <div className="w-12 h-12 bg-blue-600 rounded-md flex items-center justify-center shadow-lg shadow-blue-200">
               <span className="text-white font-bold text-2xl">E</span>
             </div>
           </div>
@@ -94,30 +107,30 @@ export const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold mb-1.5 text-slate-700">Email Address</label>
+              <label className="block text-sm font-medium mb-1.5 text-slate-700">Email Address</label>
               <input 
                 type="email" 
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" 
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all shadow-sm text-sm" 
                 placeholder="Enter your email"
                 required 
               />
             </div>
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-sm font-semibold text-slate-700">Password</label>
+                <label className="block text-sm font-medium text-slate-700">Password</label>
               </div>
               <input 
                 type="password" 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" 
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all shadow-sm text-sm" 
                 placeholder="Enter your password"
                 required 
               />
               <div className="flex justify-end mt-2">
-                <a href="#" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">Lupa password?</a>
+                <a href="#" className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">Lupa password?</a>
               </div>
             </div>
             
@@ -125,7 +138,7 @@ export const Login = () => {
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 hover:shadow-md hover:shadow-blue-200 font-semibold transition-all disabled:opacity-70 disabled:hover:shadow-none flex justify-center items-center gap-2"
+                className="w-full bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-700 shadow-sm font-medium transition-all disabled:opacity-70 disabled:hover:shadow-none flex justify-center items-center gap-2 text-sm"
               >
                 {loading ? (
                   <>
