@@ -31,6 +31,7 @@ Employee Management System (EMS) adalah platform *Human Resource* tingkat *enter
 *   **Riwayat Absensi**: Pencatatan waktu kerja secara real-time dan akurat.
 
 ### 📊 Dashboard Analytics
+*   **Personalisasi Pengguna**: Sapaan dinamis pada *dashboard* berdasarkan profil karyawan yang sedang *login*.
 *   Visualisasi data tenaga kerja (Total Karyawan, Statistik Departemen), tren kehadiran, dan status permintaan cuti menggunakan **Recharts**.
 
 ---
