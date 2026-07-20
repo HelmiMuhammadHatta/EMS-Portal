@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts';
-import { employeeService, leaveService, attendanceService } from '../services/apiService';
+import { employeeService, leaveService, attendanceService, dailyReportService } from '../services/apiService';
 import { useMemo } from 'react';
-import { Users, CalendarClock, Activity } from 'lucide-react';
+import { Users, CalendarClock, Activity, FileText } from 'lucide-react';
 
 export const Dashboard = () => {
   const { user } = useAuth();
@@ -37,6 +37,11 @@ export const Dashboard = () => {
     queryFn: () => attendanceService.getAttendances({ page: 1, pageSize: 1000 })
   });
 
+  const { data: dailyReportsData } = useQuery({
+    queryKey: ['daily-reports', 'recent'],
+    queryFn: () => dailyReportService.getAll({ page: 1, pageSize: 1000 })
+  });
+
   const metrics = useMemo(() => {
     const totalEmployees = employeesData?.data?.totalCount || 0;
     
@@ -50,6 +55,9 @@ export const Dashboard = () => {
     const uniqueAttendees = new Set(todayAttendances.map((a: any) => a.employeeId)).size;
     
     const attendanceRate = totalEmployees > 0 ? Math.round((uniqueAttendees / totalEmployees) * 100) : 0;
+
+    // Today's Daily Reports
+    const todayReports = dailyReportsData?.data?.data?.filter((dr: any) => new Date(dr.reportDate).toLocaleDateString() === todayStr).length || 0;
 
     // By Department
     const employeesList = employeesData?.data?.data || [];
@@ -108,8 +116,8 @@ export const Dashboard = () => {
       { name: 'Late', value: lateCount, color: '#ca8a04' } // Tailwind yellow-600 #ca8a04
     ].filter(d => d.value > 0);
 
-    return { totalEmployees, pendingLeaves, attendanceRate, chartData, leaveTrend, attendanceDistribution };
-  }, [employeesData, leavesData, attendancesData]);
+    return { totalEmployees, pendingLeaves, attendanceRate, todayReports, chartData, leaveTrend, attendanceDistribution };
+  }, [employeesData, leavesData, attendancesData, dailyReportsData]);
 
   return (
     <div className="flex flex-col min-h-full">
@@ -124,7 +132,7 @@ export const Dashboard = () => {
       </div>
 
       <div className="p-8 max-w-7xl mx-auto w-full flex-1">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
             <div className="absolute -right-6 -top-6 text-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <Users size={120} />
@@ -139,6 +147,24 @@ export const Dashboard = () => {
               <div className="flex items-baseline gap-2">
                 <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.totalEmployees}</h3>
                 <span className="text-sm font-medium text-slate-400">active</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+            <div className="absolute -right-6 -top-6 text-purple-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+              <FileText size={120} />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
+                <div className="p-2 bg-purple-100 rounded-full">
+                  <FileText size={20} className="text-purple-600" />
+                </div>
+                <span>Daily Reports Today</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.todayReports}</h3>
+                <span className="text-sm font-medium text-slate-400">/ {metrics.totalEmployees} submitted</span>
               </div>
             </div>
           </div>

@@ -56,3 +56,12 @@ export const roleService = {
   getRolePermissions: (roleId: string) => api.get(`/roles/${roleId}/permissions`).then(res => res.data),
   assignPermissions: (roleId: string, data: any) => api.post(`/roles/${roleId}/permissions`, data).then(res => res.data)
 };
+
+export const dailyReportService = {
+  getAll: (params?: any) => api.get('/daily-reports', { params }).then(res => res.data),
+  getById: (id: string) => api.get(`/daily-reports/${id}`).then(res => res.data),
+  create: (data: any) => api.post('/daily-reports', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/daily-reports/${id}`, data).then(res => res.data),
+  review: (id: string, data: any) => api.put(`/daily-reports/${id}/review`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/daily-reports/${id}`).then(res => res.data)
+};

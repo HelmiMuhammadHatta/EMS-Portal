@@ -44,7 +44,10 @@ public static class DataSeeder
                 new Permission { Id = Guid.NewGuid(), Name = "attendance.read", CreatedAt = DateTime.UtcNow },
                 new Permission { Id = Guid.NewGuid(), Name = "attendance.write", CreatedAt = DateTime.UtcNow },
                 new Permission { Id = Guid.NewGuid(), Name = "department.read", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "position.read", CreatedAt = DateTime.UtcNow }
+                new Permission { Id = Guid.NewGuid(), Name = "position.read", CreatedAt = DateTime.UtcNow },
+                new Permission { Id = Guid.NewGuid(), Name = "dailyreport.read", CreatedAt = DateTime.UtcNow },
+                new Permission { Id = Guid.NewGuid(), Name = "dailyreport.write", CreatedAt = DateTime.UtcNow },
+                new Permission { Id = Guid.NewGuid(), Name = "dailyreport.review", CreatedAt = DateTime.UtcNow }
             };
             
             await context.Permissions.AddRangeAsync(permissions);

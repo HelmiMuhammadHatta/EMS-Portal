@@ -28,6 +28,7 @@ public class EmsDbContext : DbContext, IApplicationDbContext
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<OfficeLocation> OfficeLocations => Set<OfficeLocation>();
+    public DbSet<DailyReport> DailyReports => Set<DailyReport>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -100,6 +101,17 @@ public class EmsDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<LeaveRequest>().HasIndex(lr => lr.EmployeeId);
         modelBuilder.Entity<Attendance>().HasIndex(a => a.EmployeeId);
         modelBuilder.Entity<Attendance>().HasIndex(a => a.ClockIn);
+        
+        // 8. DailyReport
+        modelBuilder.Entity<DailyReport>()
+            .HasIndex(dr => new { dr.EmployeeId, dr.ReportDate })
+            .IsUnique();
+            
+        modelBuilder.Entity<DailyReport>()
+            .HasOne(dr => dr.Reviewer)
+            .WithMany()
+            .HasForeignKey(dr => dr.ReviewedBy)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

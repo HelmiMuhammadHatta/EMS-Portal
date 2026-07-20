@@ -19,6 +19,7 @@ public interface IApplicationDbContext
     DbSet<Attendance> Attendances { get; }
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<OfficeLocation> OfficeLocations { get; }
+    DbSet<DailyReport> DailyReports { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -2,7 +2,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '../services/apiService';
-import { LayoutDashboard, Users, Calendar, Clock, LogOut, Menu, UserCircle, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Clock, LogOut, Menu, UserCircle, Settings as SettingsIcon, FileText } from 'lucide-react';
 import { useState } from 'react';
 
 export const Layout = () => {
@@ -23,6 +23,7 @@ export const Layout = () => {
     ...(hasPermission('employee.read') ? [{ path: '/employees', label: 'Employees', icon: <Users size={20} /> }] : []),
     { path: '/leaves', label: 'Leaves', icon: <Calendar size={20} /> },
     { path: '/attendance', label: 'Attendance', icon: <Clock size={20} /> },
+    { path: '/daily-reports', label: 'Daily Reports', icon: <FileText size={20} /> },
     ...(user?.role === 'Admin' || user?.role === 'HR' ? [{ path: '/settings', label: 'Settings', icon: <SettingsIcon size={20} /> }] : []),
   ];
 
