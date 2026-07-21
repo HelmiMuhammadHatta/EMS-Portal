@@ -63,12 +63,14 @@ public class DailyReportService : IDailyReportService
 
         if (query.StartDate.HasValue)
         {
-            dbQuery = dbQuery.Where(dr => dr.ReportDate >= query.StartDate.Value.Date);
+            var startUtc = DateTime.SpecifyKind(query.StartDate.Value.Date, DateTimeKind.Utc);
+            dbQuery = dbQuery.Where(dr => dr.ReportDate >= startUtc);
         }
 
         if (query.EndDate.HasValue)
         {
-            dbQuery = dbQuery.Where(dr => dr.ReportDate <= query.EndDate.Value.Date);
+            var endUtc = DateTime.SpecifyKind(query.EndDate.Value.Date, DateTimeKind.Utc);
+            dbQuery = dbQuery.Where(dr => dr.ReportDate <= endUtc);
         }
 
         if (!string.IsNullOrEmpty(query.Status) && Enum.TryParse<DailyReportStatus>(query.Status, true, out var status))
@@ -140,8 +142,13 @@ public class DailyReportService : IDailyReportService
 
         var reportDate = request.ReportDate.Date;
 
-        // Check if attendance exists for the day
-        var hasClockedIn = await _context.Attendances.AnyAsync(a => a.EmployeeId == employee.Id && a.ClockIn.Date == reportDate);
+        // Check if attendance exists for the day (Convert local day to UTC range to avoid timezone mismatch)
+        var startOfDayUtc = reportDate.AddHours(-7); // Assuming UTC+7 for Jakarta
+        var endOfDayUtc = startOfDayUtc.AddDays(1);
+        var hasClockedIn = await _context.Attendances.AnyAsync(a => 
+            a.EmployeeId == employee.Id && 
+            a.ClockIn >= startOfDayUtc && 
+            a.ClockIn < endOfDayUtc);
         if (!hasClockedIn)
         {
             throw new Exception("Anda belum melakukan clock-in hari ini. Laporan harian hanya bisa dibuat jika sudah clock-in.");

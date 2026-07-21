@@ -31,36 +31,35 @@ public static class DataSeeder
         }
 
         // 2. Permissions
-        if (!await context.Permissions.AnyAsync())
+        var expectedPermissions = new[]
         {
-            var permissions = new List<Permission>
+            "employee.read", "employee.write", "employee.delete",
+            "leave.read", "leave.write", "leave.approve",
+            "attendance.read", "attendance.write",
+            "department.read", "position.read",
+            "dailyreport.read", "dailyreport.write", "dailyreport.review"
+        };
+        
+        var existingPermissions = await context.Permissions.ToListAsync();
+        var adminRoleForPerms = await context.Roles.FindAsync(adminRoleId);
+        
+        foreach (var permName in expectedPermissions)
+        {
+            var perm = existingPermissions.FirstOrDefault(p => p.Name == permName);
+            if (perm == null)
             {
-                new Permission { Id = Guid.NewGuid(), Name = "employee.read", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "employee.write", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "employee.delete", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "leave.read", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "leave.write", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "leave.approve", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "attendance.read", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "attendance.write", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "department.read", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "position.read", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "dailyreport.read", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "dailyreport.write", CreatedAt = DateTime.UtcNow },
-                new Permission { Id = Guid.NewGuid(), Name = "dailyreport.review", CreatedAt = DateTime.UtcNow }
-            };
-            
-            await context.Permissions.AddRangeAsync(permissions);
-            await context.SaveChangesAsync();
-
-            // Assign all permissions to Admin
-            var adminRole = await context.Roles.FindAsync(adminRoleId);
-            foreach (var perm in permissions)
-            {
-                context.RolePermissions.Add(new RolePermission { RoleId = adminRoleId, PermissionId = perm.Id });
+                perm = new Permission { Id = Guid.NewGuid(), Name = permName, CreatedAt = DateTime.UtcNow };
+                context.Permissions.Add(perm);
+                await context.SaveChangesAsync();
+                
+                // Assign new permission to Admin by default
+                if (adminRoleForPerms != null)
+                {
+                    context.RolePermissions.Add(new RolePermission { RoleId = adminRoleId, PermissionId = perm.Id });
+                }
             }
-            await context.SaveChangesAsync();
         }
+        await context.SaveChangesAsync();
 
         // 3. Leave Types (5 Standar Baru)
         Console.WriteLine("\n--- MULAI PROSES RESET LEAVE TYPES ---");

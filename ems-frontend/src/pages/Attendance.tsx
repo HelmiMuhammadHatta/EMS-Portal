@@ -329,17 +329,15 @@ export const Attendance = () => {
                         </td>
                         <td className="px-6 py-4">
                           {att.photoUrl ? (
-                            <div className="w-10 h-10 rounded-md overflow-hidden border border-slate-200 shadow-sm bg-slate-50">
-                              <img src={`http://localhost:5000${att.photoUrl}`} alt="Attendance" className="w-full h-full object-cover" />
-                            </div>
-                          ) : (
-                            <div className="w-10 h-10 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400">
-                              <UserCircle size={20} />
-                            </div>
-                          )}
+                            <img src={`http://localhost:5000${att.photoUrl}`} alt="Clock In" className="h-10 w-10 rounded-md object-cover border border-slate-200 shadow-sm" />
+                          ) : <span className="text-slate-400 text-xs">-</span>}
                         </td>
-                        <td className="px-6 py-4 text-blue-600 font-mono text-xs font-semibold">{new Date(att.clockIn).toLocaleTimeString()}</td>
-                        <td className="px-6 py-4 font-mono text-xs font-semibold">{att.clockOut ? new Date(att.clockOut).toLocaleTimeString() : '-'}</td>
+                        <td className="px-6 py-4 font-medium text-emerald-600">
+                          {new Date(att.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </td>
+                        <td className="px-6 py-4 font-medium text-amber-600">
+                          {att.clockOut ? new Date(att.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}
+                        </td>
                         <td className="px-6 py-4">
                           {getStatusBadge(att.status)}
                         </td>

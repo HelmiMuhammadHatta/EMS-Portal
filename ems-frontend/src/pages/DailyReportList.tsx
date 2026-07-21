@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dailyReportService, attendanceService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
-import { FileText, Plus, X, Search, Edit2, Trash2, CheckCircle, MessageSquare } from 'lucide-react';
+import { FileText, Plus, X, Search, Edit2, Trash2, CheckCircle, MessageSquare, Clock } from 'lucide-react';
 
 export const DailyReportList = () => {
   const { user } = useAuth();
@@ -14,9 +14,12 @@ export const DailyReportList = () => {
   const [reviewingReport, setReviewingReport] = useState<any>(null);
   
   const [formData, setFormData] = useState({
+    reportDate: new Date().toLocaleDateString('en-CA'),
     tasksCompleted: '',
     blockers: ''
   });
+  
+  const [dateWarning, setDateWarning] = useState('');
   
   const [reviewData, setReviewData] = useState({
     managerFeedback: ''
@@ -26,7 +29,7 @@ export const DailyReportList = () => {
   
   const isManagerOrAdmin = user?.role === 'Manager' || user?.role === 'Admin';
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['daily-reports', dateFilter],
     queryFn: () => {
       const params: any = { page: 1, pageSize: 50 };
@@ -46,6 +49,47 @@ export const DailyReportList = () => {
       return res.data?.data?.find((a: any) => new Date(a.clockIn).toLocaleDateString() === today);
     }
   });
+
+  const checkEligibility = async (dateStr: string) => {
+    if (!dateStr) {
+      setDateWarning('');
+      return;
+    }
+    try {
+      const attRes = await attendanceService.getAttendances({ page: 1, pageSize: 50, employeeId: user?.employeeId });
+      const attendances = attRes.data || [];
+      const hasClockedIn = attendances.some((a: any) => {
+        const localDate = new Date(a.clockIn).toLocaleDateString('en-CA');
+        return localDate === dateStr;
+      });
+
+      if (!hasClockedIn) {
+        setDateWarning('Anda belum melakukan clock-in pada tanggal ini.');
+        return;
+      }
+
+      const repRes = await dailyReportService.getAll({ page: 1, pageSize: 50 });
+      const reports = repRes.data || [];
+      const existingReport = reports.find((r: any) => {
+        const rDate = r.reportDate.split('T')[0];
+        return rDate === dateStr && (r.employeeId === user?.employeeId || r.employeeName === user?.fullName);
+      });
+
+      if (existingReport && (!editingReport || existingReport.id !== editingReport.id)) {
+        setDateWarning('Anda sudah membuat laporan harian untuk tanggal ini.');
+        return;
+      }
+      setDateWarning('');
+    } catch (e) {
+      console.error('Error checking eligibility', e);
+    }
+  };
+
+  useEffect(() => {
+    if (isModalOpen && formData.reportDate && !isManagerOrAdmin) {
+      checkEligibility(formData.reportDate);
+    }
+  }, [formData.reportDate, isModalOpen, isManagerOrAdmin, editingReport]);
 
   const createMutation = useMutation({
     mutationFn: (data: any) => dailyReportService.create(data),
@@ -100,11 +144,14 @@ export const DailyReportList = () => {
     if (editingReport) {
       updateMutation.mutate({
         id: editingReport.id,
-        data: formData
+        data: {
+          ...formData,
+          reportDate: new Date(formData.reportDate).toISOString()
+        }
       });
     } else {
       createMutation.mutate({
-        reportDate: new Date().toISOString(),
+        reportDate: new Date(formData.reportDate).toISOString(),
         tasksCompleted: formData.tasksCompleted,
         blockers: formData.blockers
       });
@@ -125,8 +172,9 @@ export const DailyReportList = () => {
   };
 
   const resetForm = () => {
-    setFormData({ tasksCompleted: '', blockers: '' });
+    setFormData({ reportDate: new Date().toLocaleDateString('en-CA'), tasksCompleted: '', blockers: '' });
     setEditingReport(null);
+    setDateWarning('');
   };
 
   const openCreateModal = () => {
@@ -141,6 +189,7 @@ export const DailyReportList = () => {
   const openEditModal = (report: any) => {
     setEditingReport(report);
     setFormData({
+      reportDate: new Date(report.reportDate).toLocaleDateString('en-CA'),
       tasksCompleted: report.tasksCompleted,
       blockers: report.blockers || ''
     });
@@ -219,15 +268,19 @@ export const DailyReportList = () => {
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Memuat data...</td>
                 </tr>
-              ) : data?.data?.data?.length === 0 ? (
+              ) : isError ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-red-500">Gagal memuat data laporan harian.</td>
+                </tr>
+              ) : (!data?.data || data.data.length === 0) ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Belum ada laporan harian.</td>
                 </tr>
               ) : (
-                data?.data?.data?.map((report: any) => (
+                data.data.map((report: any) => (
                   <tr key={report.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 font-medium text-slate-700">
-                      {new Date(report.reportDate).toLocaleDateString('id-ID')}
+                      {new Date(report.reportDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </td>
                     {isManagerOrAdmin && (
                       <td className="px-6 py-4 text-slate-600">
@@ -251,7 +304,7 @@ export const DailyReportList = () => {
                       {report.managerFeedback || <span className="text-slate-400 italic">Belum ada</span>}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2">
                         {isManagerOrAdmin ? (
                           <button 
                             onClick={() => openReviewModal(report)}
@@ -310,6 +363,21 @@ export const DailyReportList = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Tanggal Laporan <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="date"
+                    max={new Date().toLocaleDateString('en-CA')}
+                    value={formData.reportDate}
+                    onChange={(e) => setFormData({...formData, reportDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                    required
+                  />
+                  {dateWarning && <p className="text-xs text-yellow-600 mt-1 font-medium">{dateWarning}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Pekerjaan yang Diselesaikan Hari Ini <span className="text-red-500">*</span>
                   </label>
                   <textarea 
@@ -344,7 +412,7 @@ export const DailyReportList = () => {
                 </button>
                 <button 
                   type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={createMutation.isPending || updateMutation.isPending || !!dateWarning}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {(createMutation.isPending || updateMutation.isPending) ? 'Menyimpan...' : 'Simpan Laporan'}
