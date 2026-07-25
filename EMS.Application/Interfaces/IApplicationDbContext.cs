@@ -20,6 +20,10 @@ public interface IApplicationDbContext
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<OfficeLocation> OfficeLocations { get; }
     DbSet<DailyReport> DailyReports { get; }
+    DbSet<WorkShift> WorkShifts { get; }
+    DbSet<ShiftSchedule> ShiftSchedules { get; }
+    DbSet<ShiftRotationGroup> ShiftRotationGroups { get; }
+    DbSet<ShiftRotationPattern> ShiftRotationPatterns { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { employeeService, departmentService, positionService } from '../services/apiService';
+import { employeeService, departmentService, positionService, workShiftService, shiftRotationService } from '../services/apiService';
 import { toast } from 'sonner';
-import { Search, Plus, KeyRound, Users, ChevronLeft, ChevronRight, X, UserCog, Edit, Trash2, Eye } from 'lucide-react';
+import { Search, Plus, KeyRound, Users, ChevronLeft, ChevronRight, X, Edit, Trash2, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const EmployeeList = () => {
@@ -21,6 +21,8 @@ export const EmployeeList = () => {
 
   const { data: depts } = useQuery({ queryKey: ['departments'], queryFn: departmentService.getAll });
   const { data: positions } = useQuery({ queryKey: ['positions'], queryFn: positionService.getAll });
+  const { data: workshifts } = useQuery({ queryKey: ['workshifts'], queryFn: workShiftService.getAll });
+  const { data: rotationGroups } = useQuery({ queryKey: ['rotation-groups'], queryFn: shiftRotationService.getGroups });
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['employees', page, search, deptFilter, posFilter],
@@ -58,7 +60,7 @@ export const EmployeeList = () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowEditModal(false);
     },
-    onError: (err: any) => toast.error("Failed to update employee")
+    onError: () => toast.error("Failed to update employee")
   });
 
   const deleteMutation = useMutation({
@@ -67,13 +69,13 @@ export const EmployeeList = () => {
       toast.success("Employee deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
-    onError: (err: any) => toast.error("Failed to delete employee")
+    onError: () => toast.error("Failed to delete employee")
   });
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+    const data: any = Object.fromEntries(formData.entries());
     if (!data.managerId) data.managerId = null;
     createMutation.mutate(data);
   };
@@ -339,9 +341,27 @@ export const EmployeeList = () => {
                         </select>
                     </div>
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Hire Date</label>
-                    <input name="hireDate" type="date" required className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm" defaultValue={new Date().toISOString().split('T')[0]} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Hire Date</label>
+                        <input name="hireDate" type="date" required className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm" defaultValue={new Date().toISOString().split('T')[0]} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Default Shift</label>
+                        <select name="defaultShiftId" className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm">
+                            <option value="">(None)</option>
+                            {workshifts?.map((ws: any) => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
+                        </select>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Rotation Group</label>
+                        <select name="rotationGroupId" className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm">
+                            <option value="">(None - Fixed Shift)</option>
+                            {rotationGroups?.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                        </select>
+                    </div>
                 </div>
                 
                 <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">
@@ -409,14 +429,32 @@ export const EmployeeList = () => {
                         </select>
                     </div>
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
-                    <select name="status" defaultValue={editData.status} required className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm">
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                        <option value="OnLeave">OnLeave</option>
-                        <option value="Terminated">Terminated</option>
-                    </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
+                        <select name="status" defaultValue={editData.status} required className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="OnLeave">OnLeave</option>
+                            <option value="Terminated">Terminated</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Default Shift</label>
+                        <select name="defaultShiftId" defaultValue={editData.defaultShiftId || ''} className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm">
+                            <option value="">(None)</option>
+                            {workshifts?.map((ws: any) => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
+                        </select>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Rotation Group</label>
+                        <select name="rotationGroupId" defaultValue={editData.rotationGroupId || ''} className="w-full border border-slate-200 bg-white px-3 py-2 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm text-sm">
+                            <option value="">(None - Fixed Shift)</option>
+                            {rotationGroups?.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                        </select>
+                    </div>
                 </div>
                 
                 <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">

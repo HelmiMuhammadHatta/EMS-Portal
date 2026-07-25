@@ -18,4 +18,5 @@ public interface IEmployeeService
     Task DeleteDocumentAsync(Guid employeeId, Guid documentId, Guid requesterUserId, bool isRequesterAdmin);
     Task<object> GetAuditLogsAsync(Guid employeeId, int page, int pageSize, Guid requesterUserId, bool isRequesterAdmin);
     Task ChangePasswordAsync(Guid id, string newPassword, Guid requesterUserId, bool isRequesterAdmin);
+    Task UpdateDefaultShiftAsync(Guid id, Guid? defaultShiftId, Guid requesterUserId, bool isRequesterAdmin);
 }

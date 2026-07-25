@@ -33,6 +33,8 @@ public class EmployeeResponse
     public string Status { get; set; } = null!;
     public string? ManagerName { get; set; }
     public Guid? ManagerId { get; set; }
+    public Guid? DefaultShiftId { get; set; }
+    public string? DefaultShiftName { get; set; }
 }
 
 public class EmployeeDetailResponse : EmployeeResponse
@@ -58,6 +60,7 @@ public class CreateEmployeeRequest
     public Guid PositionId { get; set; }
     public Guid? ManagerId { get; set; }
     public DateTime HireDate { get; set; }
+    public Guid? DefaultShiftId { get; set; }
 }
 
 public class UpdateEmployeeRequest
@@ -68,9 +71,15 @@ public class UpdateEmployeeRequest
     public Guid PositionId { get; set; }
     public Guid? ManagerId { get; set; }
     public string Status { get; set; } = null!;
+    public Guid? DefaultShiftId { get; set; }
 }
 
 public class ChangePasswordRequest
 {
     public string NewPassword { get; set; } = null!;
+}
+
+public class UpdateDefaultShiftRequest
+{
+    public Guid? DefaultShiftId { get; set; }
 }

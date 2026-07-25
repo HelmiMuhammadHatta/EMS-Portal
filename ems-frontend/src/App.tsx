@@ -13,6 +13,7 @@ import { DailyReportList } from './pages/DailyReportList';
 
 import { Settings } from './pages/Settings';
 import { EmployeeDetail } from './pages/EmployeeDetail';
+import { ShiftSchedules } from './pages/ShiftSchedules';
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ export function App() {
             <Route path="/employees/:id" element={<EmployeeDetail />} />
             <Route path="/leaves" element={<LeaveRequest />} />
             <Route path="/attendance" element={<Attendance />} />
+            <Route path="/shift-schedules" element={<ShiftSchedules />} />
             <Route path="/daily-reports" element={<DailyReportList />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

@@ -457,5 +457,62 @@ public static class DataSeeder
             await context.SaveChangesAsync();
             Console.WriteLine("\n[INFO] Berhasil menambahkan 3 data attendance dummy untuk hari ini.");
         }
+        
+        // 9. Work Shifts Seed & Assignment
+        var ohShift = await context.WorkShifts.FirstOrDefaultAsync(s => s.Name == "Office Hour");
+        if (ohShift == null)
+        {
+            ohShift = new WorkShift { Id = Guid.NewGuid(), Name = "Office Hour", StartTime = new TimeSpan(8, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsOvernight = false, ToleranceMinutes = 15, CreatedAt = DateTime.UtcNow };
+            context.WorkShifts.Add(ohShift);
+        }
+        
+        var spShift = await context.WorkShifts.FirstOrDefaultAsync(s => s.Name == "Shift Pagi");
+        if (spShift == null)
+        {
+            spShift = new WorkShift { Id = Guid.NewGuid(), Name = "Shift Pagi", StartTime = new TimeSpan(6, 0, 0), EndTime = new TimeSpan(14, 0, 0), IsOvernight = false, ToleranceMinutes = 15, CreatedAt = DateTime.UtcNow };
+            context.WorkShifts.Add(spShift);
+        }
+        
+        var ssShift = await context.WorkShifts.FirstOrDefaultAsync(s => s.Name == "Shift Siang");
+        if (ssShift == null)
+        {
+            ssShift = new WorkShift { Id = Guid.NewGuid(), Name = "Shift Siang", StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(22, 0, 0), IsOvernight = false, ToleranceMinutes = 15, CreatedAt = DateTime.UtcNow };
+            context.WorkShifts.Add(ssShift);
+        }
+        
+        var smShift = await context.WorkShifts.FirstOrDefaultAsync(s => s.Name == "Shift Malam");
+        if (smShift == null)
+        {
+            smShift = new WorkShift { Id = Guid.NewGuid(), Name = "Shift Malam", StartTime = new TimeSpan(22, 0, 0), EndTime = new TimeSpan(6, 0, 0), IsOvernight = true, ToleranceMinutes = 15, CreatedAt = DateTime.UtcNow };
+            context.WorkShifts.Add(smShift);
+        }
+        await context.SaveChangesAsync();
+
+        var nonOpDeptNames = new[] { "Human Resources", "Finance & Accounting", "Information Technology", "Sales & Marketing", "Legal & Compliance", "Research & Development" };
+        var opsDeptNames = new[] { "Operations", "Customer Service" };
+        
+        var allEmployees = await context.Employees.Include(e => e.Department).ToListAsync();
+        foreach (var emp in allEmployees)
+        {
+            if (emp.DefaultShiftId == null)
+            {
+                if (emp.Department != null && opsDeptNames.Contains(emp.Department.Name))
+                {
+                    // Randomly assign shift for ops/cs
+                    emp.DefaultShiftId = (emp.Id.GetHashCode() % 3) switch
+                    {
+                        0 => spShift.Id,
+                        1 => ssShift.Id,
+                        _ => smShift.Id
+                    };
+                }
+                else
+                {
+                    // Default to Office Hour
+                    emp.DefaultShiftId = ohShift.Id;
+                }
+            }
+        }
+        await context.SaveChangesAsync();
     }
 }

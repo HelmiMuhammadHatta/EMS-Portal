@@ -22,6 +22,12 @@ public class Employee
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    public Guid? DefaultShiftId { get; set; }
+    public WorkShift? DefaultShift { get; set; }
+    
+    public Guid? RotationGroupId { get; set; }
+    public ShiftRotationGroup? RotationGroup { get; set; }
+    
     public ICollection<EmployeeDocument> Documents { get; set; } = new List<EmployeeDocument>();
     public ICollection<LeaveRequest> LeaveRequests { get; set; } = new List<LeaveRequest>();
     public ICollection<LeaveRequest> ApprovedLeaveRequests { get; set; } = new List<LeaveRequest>();

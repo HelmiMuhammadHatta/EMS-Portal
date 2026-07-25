@@ -29,6 +29,10 @@ public class EmsDbContext : DbContext, IApplicationDbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<OfficeLocation> OfficeLocations => Set<OfficeLocation>();
     public DbSet<DailyReport> DailyReports => Set<DailyReport>();
+    public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
+    public DbSet<ShiftSchedule> ShiftSchedules => Set<ShiftSchedule>();
+    public DbSet<ShiftRotationGroup> ShiftRotationGroups => Set<ShiftRotationGroup>();
+    public DbSet<ShiftRotationPattern> ShiftRotationPatterns => Set<ShiftRotationPattern>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -112,6 +116,53 @@ public class EmsDbContext : DbContext, IApplicationDbContext
             .WithMany()
             .HasForeignKey(dr => dr.ReviewedBy)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // 9. Employee -> DefaultShift (Nullable)
+        modelBuilder.Entity<Employee>()
+            .HasOne(e => e.DefaultShift)
+            .WithMany()
+            .HasForeignKey(e => e.DefaultShiftId)
+            .OnDelete(DeleteBehavior.SetNull);
+            
+        // 10. ShiftSchedule relations
+        modelBuilder.Entity<ShiftSchedule>()
+            .HasOne(ss => ss.Employee)
+            .WithMany()
+            .HasForeignKey(ss => ss.EmployeeId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        modelBuilder.Entity<ShiftSchedule>()
+            .HasOne(ss => ss.WorkShift)
+            .WithMany()
+            .HasForeignKey(ss => ss.WorkShiftId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<ShiftSchedule>()
+            .HasIndex(ss => new { ss.EmployeeId, ss.Date })
+            .IsUnique();
+            
+        // 11. Shift Rotation logic
+        modelBuilder.Entity<Employee>()
+            .HasOne(e => e.RotationGroup)
+            .WithMany(rg => rg.Employees)
+            .HasForeignKey(e => e.RotationGroupId)
+            .OnDelete(DeleteBehavior.SetNull);
+            
+        modelBuilder.Entity<ShiftRotationPattern>()
+            .HasOne(srp => srp.RotationGroup)
+            .WithMany(rg => rg.Patterns)
+            .HasForeignKey(srp => srp.RotationGroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        modelBuilder.Entity<ShiftRotationPattern>()
+            .HasOne(srp => srp.WorkShift)
+            .WithMany()
+            .HasForeignKey(srp => srp.WorkShiftId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<ShiftRotationPattern>()
+            .HasIndex(srp => new { srp.RotationGroupId, srp.CycleWeekNumber })
+            .IsUnique();
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

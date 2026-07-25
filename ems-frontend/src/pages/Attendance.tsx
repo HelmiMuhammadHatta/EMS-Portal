@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceService } from '../services/apiService';
 import { toast } from 'sonner';
-import { Camera, MapPin, MapPinned, ListChecks, CheckCircle, Clock, Timer, UserCircle, LogOut, Download, Calendar as CalendarIcon, X } from 'lucide-react';
+import { Camera, MapPin, MapPinned, ListChecks, Clock, Timer, LogOut, Download, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export const Attendance = () => {
@@ -46,6 +46,12 @@ export const Attendance = () => {
   const { data: summary } = useQuery({
     queryKey: ['attendance-summary', user?.employeeId],
     queryFn: () => attendanceService.getSummary(user?.employeeId!, new Date().getMonth() + 1, new Date().getFullYear()),
+    enabled: !!user?.employeeId
+  });
+
+  const { data: effectiveShift, isLoading: isLoadingShift } = useQuery({
+    queryKey: ['effective-shift', user?.employeeId, new Date().toISOString().split('T')[0]],
+    queryFn: () => attendanceService.getEffectiveShift(user?.employeeId!, new Date().toISOString().split('T')[0]),
     enabled: !!user?.employeeId
   });
 
@@ -197,6 +203,19 @@ export const Attendance = () => {
               <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left">
                 <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Live Check-in</h2>
                 <p className="text-slate-500 mt-2 max-w-md">Position yourself in front of the camera and ensure your location services are enabled to clock in or out.</p>
+                
+                <div className="mt-4 bg-blue-50 border border-blue-100 rounded-md p-4 w-full sm:w-auto text-left">
+                  <div className="text-sm font-semibold text-blue-800 mb-1">Your Shift Today</div>
+                  {isLoadingShift ? (
+                    <div className="text-sm text-blue-600 animate-pulse">Loading shift...</div>
+                  ) : effectiveShift?.data ? (
+                    <div className="text-sm text-blue-700">
+                      <span className="font-bold">{effectiveShift.data.name}</span>: {effectiveShift.data.startTime} - {effectiveShift.data.endTime}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-blue-600">No shift assigned</div>
+                  )}
+                </div>
                 
                 <div className="mt-6 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                   <button 

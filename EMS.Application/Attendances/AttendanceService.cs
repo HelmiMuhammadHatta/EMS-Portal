@@ -62,6 +62,41 @@ public class AttendanceService : IAttendanceService
 
         return allowedIds.ToList();
     }
+    
+    public async Task<WorkShiftDto> GetEffectiveShiftAsync(Guid employeeId, DateTime date)
+    {
+        var targetDate = date.Date;
+        
+        // 1. Check ShiftSchedule override
+        var schedule = await _context.ShiftSchedules
+            .Include(ss => ss.WorkShift)
+            .FirstOrDefaultAsync(ss => ss.EmployeeId == employeeId && ss.Date == targetDate);
+            
+        if (schedule != null)
+        {
+            return new WorkShiftDto(schedule.WorkShift.Id, schedule.WorkShift.Name, schedule.WorkShift.StartTime, schedule.WorkShift.EndTime, schedule.WorkShift.IsOvernight, schedule.WorkShift.ToleranceMinutes);
+        }
+        
+        // 2. Check Employee Default Shift
+        var employee = await _context.Employees
+            .Include(e => e.DefaultShift)
+            .FirstOrDefaultAsync(e => e.Id == employeeId);
+            
+        if (employee?.DefaultShift != null)
+        {
+            return new WorkShiftDto(employee.DefaultShift.Id, employee.DefaultShift.Name, employee.DefaultShift.StartTime, employee.DefaultShift.EndTime, employee.DefaultShift.IsOvernight, employee.DefaultShift.ToleranceMinutes);
+        }
+        
+        // 3. Fallback to System Default (Office Hour)
+        var defaultShift = await _context.WorkShifts.FirstOrDefaultAsync(ws => ws.Name == "Office Hour");
+        if (defaultShift != null)
+        {
+             return new WorkShiftDto(defaultShift.Id, defaultShift.Name, defaultShift.StartTime, defaultShift.EndTime, defaultShift.IsOvernight, defaultShift.ToleranceMinutes);
+        }
+        
+        // Hard fallback if seed data is missing
+        return new WorkShiftDto(Guid.Empty, "Office Hour", new TimeSpan(8,0,0), new TimeSpan(17,0,0), false, 15);
+    }
 
     public async Task ClockInAsync(ClockInRequest request, Guid requesterUserId)
     {
@@ -94,6 +129,8 @@ public class AttendanceService : IAttendanceService
         var localTime = now.AddHours(7); // Assume UTC+7 for Jakarta
         var today = localTime.Date;
 
+        var shift = await GetEffectiveShiftAsync(employee.Id, today);
+
         var attendances = await _context.Attendances
             .Where(a => a.EmployeeId == employee.Id)
             .ToListAsync();
@@ -104,7 +141,7 @@ public class AttendanceService : IAttendanceService
             throw new Exception("You have already clocked in today.");
 
         var status = AttendanceStatus.OnTime;
-        var lateThreshold = new TimeSpan(8, 15, 0); // 08:15 AM
+        var lateThreshold = shift.StartTime.Add(TimeSpan.FromMinutes(shift.ToleranceMinutes));
         if (localTime.TimeOfDay > lateThreshold)
         {
             status = AttendanceStatus.Late;
@@ -157,20 +194,49 @@ public class AttendanceService : IAttendanceService
         var now = DateTime.UtcNow;
         var localTime = now.AddHours(7);
         var today = localTime.Date;
+        var yesterday = today.AddDays(-1);
 
-        // Note: this avoids client side eval exception by querying all for employee, assuming one per day usually
-        var attendances = await _context.Attendances.Where(a => a.EmployeeId == employee.Id).ToListAsync();
-        var existing = attendances.FirstOrDefault(a => a.ClockIn.AddHours(7).Date == today);
+        var attendances = await _context.Attendances.Where(a => a.EmployeeId == employee.Id && a.ClockOut == null).ToListAsync();
+        
+        // Find the matching clock in. We look at today and yesterday.
+        // First check today's shift
+        var shiftToday = await GetEffectiveShiftAsync(employee.Id, today);
+        var shiftYesterday = await GetEffectiveShiftAsync(employee.Id, yesterday);
+
+        Attendance? existing = null;
+        WorkShiftDto? effectiveShift = null;
+
+        // Find an active attendance from today
+        existing = attendances.FirstOrDefault(a => a.ClockIn.AddHours(7).Date == today);
+        effectiveShift = shiftToday;
+
+        // If not found today, and yesterday was an overnight shift, check if there's a pending clock-in from yesterday
+        if (existing == null && shiftYesterday.IsOvernight)
+        {
+            existing = attendances.FirstOrDefault(a => a.ClockIn.AddHours(7).Date == yesterday);
+            effectiveShift = shiftYesterday;
+        }
 
         if (existing == null)
-            throw new Exception("You haven't clocked in today.");
+            throw new Exception("You haven't clocked in or already clocked out.");
 
-        if (existing.ClockOut != null)
-            throw new Exception("You have already clocked out today.");
-
-        if (localTime.TimeOfDay < new TimeSpan(17, 0, 0)) // 17:00 PM
+        if (effectiveShift != null && localTime.TimeOfDay < effectiveShift.EndTime && !effectiveShift.IsOvernight)
         {
+            // For normal shifts, check time of day
             existing.Status = AttendanceStatus.EarlyLeave;
+        }
+        else if (effectiveShift != null && effectiveShift.IsOvernight && existing.ClockIn.AddHours(7).Date == yesterday)
+        {
+             // For overnight shifts, if clock out is next day, we check if localTime.TimeOfDay is before EndTime (e.g. 06:00)
+             // However, if they clock out on the SAME day as clock in (e.g., clocked in at 22:00, clocked out at 23:30), it's early leave.
+             if (localTime.Date == yesterday && localTime.TimeOfDay < new TimeSpan(23, 59, 59))
+             {
+                 existing.Status = AttendanceStatus.EarlyLeave;
+             }
+             else if (localTime.Date == today && localTime.TimeOfDay < effectiveShift.EndTime)
+             {
+                 existing.Status = AttendanceStatus.EarlyLeave;
+             }
         }
 
         existing.ClockOut = now;

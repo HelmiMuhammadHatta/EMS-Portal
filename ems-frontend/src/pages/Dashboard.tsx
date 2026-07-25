@@ -223,7 +223,7 @@ export const Dashboard = () => {
                   <Tooltip 
                     cursor={{fill: '#f8fafc'}} 
                     contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '12px'}}
-                    formatter={(value: number, name: string, props: any) => [`${value}% (${props.payload?.name})`, 'Attendance Rate']}
+                    formatter={(value: number, _name: string, props: any) => [`${value}% (${props.payload?.name})`, 'Attendance Rate']}
                   />
                   <Bar dataKey="rate" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={60} />
                 </BarChart>

@@ -70,4 +70,12 @@ public class AttendancesController : ControllerBase
         var fileBytes = await _attendanceService.ExportAttendancesAsync(startDate, endDate, departmentId, GetRequesterId(), IsRequesterAdmin());
         return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Attendances_Export_{DateTime.UtcNow.AddHours(7):yyyyMMdd}.xlsx");
     }
+
+    [HttpGet("employees/{employeeId}/effective-shift")]
+    public async Task<IActionResult> GetEffectiveShift(Guid employeeId, [FromQuery] DateTime? date)
+    {
+        var targetDate = date ?? DateTime.UtcNow.AddHours(7).Date;
+        var result = await _attendanceService.GetEffectiveShiftAsync(employeeId, targetDate);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
 }

@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<EMS.Application.Settings.IDepartmentService, EMS.Application.Settings.DepartmentService>();
         services.AddScoped<EMS.Application.Settings.IPositionService, EMS.Application.Settings.PositionService>();
         services.AddScoped<EMS.Application.Settings.IRoleService, EMS.Application.Settings.RoleService>();
+        services.AddScoped<EMS.Application.Attendances.IWorkShiftService, EMS.Application.Attendances.WorkShiftService>();
+        services.AddScoped<EMS.Application.Attendances.IShiftRotationService, EMS.Application.Attendances.ShiftRotationService>();
         
         return services;
     }

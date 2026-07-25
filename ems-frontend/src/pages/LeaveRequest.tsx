@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leaveService, employeeService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
-import { Calendar, Plus, CheckCircle, Clock, XCircle, X, Send, Inbox } from 'lucide-react';
+import { Calendar, Plus, CheckCircle, Clock, XCircle, X, Inbox } from 'lucide-react';
 
 export const LeaveRequest = () => {
   const { user } = useAuth();

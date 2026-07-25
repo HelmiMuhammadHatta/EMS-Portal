@@ -63,6 +63,14 @@ public class EmployeesController : ControllerBase
         await _employeeService.UpdateEmployeeAsync(id, request, GetRequesterId(), IsRequesterAdmin());
         return Ok(ApiResponse<object>.SuccessResponse(new { }, "Employee updated successfully."));
     }
+    
+    [Authorize(Policy = "employee.write")]
+    [HttpPut("{id}/default-shift")]
+    public async Task<IActionResult> UpdateDefaultShift(Guid id, [FromBody] UpdateDefaultShiftRequest request)
+    {
+        await _employeeService.UpdateDefaultShiftAsync(id, request.DefaultShiftId, GetRequesterId(), IsRequesterAdmin());
+        return Ok(ApiResponse<object>.SuccessResponse(new { }, "Default shift updated successfully."));
+    }
 
     [Authorize(Policy = "employee.delete")]
     [HttpDelete("{id}")]

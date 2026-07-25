@@ -34,7 +34,8 @@ export const attendanceService = {
   clockOut: (data: any) => api.post('/attendances/clock-out', data).then(res => res.data),
   getAttendances: (params?: any) => api.get('/attendances', { params }).then(res => res.data),
   getSummary: (employeeId: string, month: number, year: number) => api.get(`/attendances/summary/${employeeId}?month=${month}&year=${year}`).then(res => res.data),
-  export: (params?: any) => api.get('/attendances/export', { params, responseType: 'blob' }).then(res => res.data)
+  export: (params?: any) => api.get('/attendances/export', { params, responseType: 'blob' }).then(res => res.data),
+  getEffectiveShift: (employeeId: string, date: string) => api.get(`/employees/${employeeId}/effective-shift?date=${date}`).then(res => res.data)
 };
 
 export const departmentService = {
@@ -64,4 +65,32 @@ export const dailyReportService = {
   update: (id: string, data: any) => api.put(`/daily-reports/${id}`, data).then(res => res.data),
   review: (id: string, data: any) => api.put(`/daily-reports/${id}/review`, data).then(res => res.data),
   delete: (id: string) => api.delete(`/daily-reports/${id}`).then(res => res.data)
+};
+
+export const workShiftService = {
+  getAll: () => api.get('/work-shifts').then(res => res.data),
+  create: (data: any) => api.post('/work-shifts', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/work-shifts/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/work-shifts/${id}`).then(res => res.data)
+};
+
+export const shiftScheduleService = {
+  getSchedules: (employeeId: string, startDate: string, endDate: string) => api.get(`/shift-schedules?employeeId=${employeeId}&startDate=${startDate}&endDate=${endDate}`).then(res => res.data),
+  assign: (data: any) => api.post('/shift-schedules', data).then(res => res.data),
+  generate: (data: { startDate: string; endDate: string }) => api.post('/shift-schedules/generate', data).then(res => res.data),
+  override: (id: string, data: { workShiftId: string }) => api.put(`/shift-schedules/${id}/override`, data).then(res => res.data)
+};
+
+export const shiftRotationService = {
+  getGroups: () => api.get('/shift-rotation-groups').then(res => res.data),
+  getGroup: (id: string) => api.get(`/shift-rotation-groups/${id}`).then(res => res.data),
+  createGroup: (data: any) => api.post('/shift-rotation-groups', data).then(res => res.data),
+  updateGroup: (id: string, data: any) => api.put(`/shift-rotation-groups/${id}`, data).then(res => res.data),
+  deleteGroup: (id: string) => api.delete(`/shift-rotation-groups/${id}`).then(res => res.data),
+  assignEmployees: (groupId: string, employeeIds: string[]) => api.post(`/shift-rotation-groups/${groupId}/assign-employees`, employeeIds).then(res => res.data),
+  
+  getPatterns: (groupId: string) => api.get(`/shift-rotation-groups/${groupId}/patterns`).then(res => res.data),
+  createPattern: (groupId: string, data: any) => api.post(`/shift-rotation-groups/${groupId}/patterns`, data).then(res => res.data),
+  updatePattern: (groupId: string, patternId: string, data: any) => api.put(`/shift-rotation-groups/${groupId}/patterns/${patternId}`, data).then(res => res.data),
+  deletePattern: (groupId: string, patternId: string) => api.delete(`/shift-rotation-groups/${groupId}/patterns/${patternId}`).then(res => res.data)
 };

@@ -83,6 +83,7 @@ public class EmployeeService : IEmployeeService
             .Include(e => e.Position)
             .Include(e => e.Manager)
             .Include(e => e.User)
+            .Include(e => e.DefaultShift)
             .AsQueryable();
 
         if (!isRequesterAdmin)
@@ -130,7 +131,9 @@ public class EmployeeService : IEmployeeService
                 PositionName = e.Position?.Name ?? "",
                 Status = e.Status.ToString(),
                 ManagerName = e.Manager?.FullName,
-                ManagerId = e.ManagerId
+                ManagerId = e.ManagerId,
+                DefaultShiftId = e.DefaultShiftId,
+                DefaultShiftName = e.DefaultShift?.Name
             })
         };
     }
@@ -145,6 +148,7 @@ public class EmployeeService : IEmployeeService
             .Include(e => e.Position)
             .Include(e => e.Manager)
             .Include(e => e.User)
+            .Include(e => e.DefaultShift)
             .Include(e => e.Documents)
             .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -163,6 +167,8 @@ public class EmployeeService : IEmployeeService
             ManagerId = employee.ManagerId,
             HireDate = employee.HireDate,
             Email = employee.User?.Email ?? "",
+            DefaultShiftId = employee.DefaultShiftId,
+            DefaultShiftName = employee.DefaultShift?.Name,
             Documents = employee.Documents.Select(d => new DocumentResponse
             {
                 Id = d.Id,
@@ -223,6 +229,7 @@ public class EmployeeService : IEmployeeService
             PositionId = request.PositionId,
             ManagerId = request.ManagerId,
             HireDate = request.HireDate.ToUniversalTime(),
+            DefaultShiftId = request.DefaultShiftId,
             Status = EmployeeStatus.Active,
             IsDeleted = false,
             CreatedAt = DateTime.UtcNow
@@ -246,7 +253,7 @@ public class EmployeeService : IEmployeeService
 
         await CheckCircularReferenceAsync(id, request.ManagerId);
 
-        // Validate hierarchy: Manager's Position Level must be < Subordinate's Position Level (lower level number means higher rank)
+        // Validate hierarchy update
         if (request.ManagerId != null)
         {
             var manager = await _context.Employees.Include(e => e.Position).FirstOrDefaultAsync(e => e.Id == request.ManagerId);
@@ -264,13 +271,28 @@ public class EmployeeService : IEmployeeService
         }
 
         employee.FullName = request.FullName;
-        if (!string.IsNullOrEmpty(request.Gender)) employee.Gender = Enum.Parse<Gender>(request.Gender, true);
+        employee.Gender = string.IsNullOrEmpty(request.Gender) ? null : Enum.Parse<Gender>(request.Gender, true);
         employee.DepartmentId = request.DepartmentId;
         employee.PositionId = request.PositionId;
         employee.ManagerId = request.ManagerId;
+        employee.DefaultShiftId = request.DefaultShiftId;
         employee.Status = Enum.Parse<EmployeeStatus>(request.Status, true);
         employee.UpdatedAt = DateTime.UtcNow;
 
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateDefaultShiftAsync(Guid id, Guid? defaultShiftId, Guid requesterUserId, bool isRequesterAdmin)
+    {
+        if (!await IsRequesterAllowedAsync(id, requesterUserId, isRequesterAdmin))
+            throw new Exception("Forbidden");
+
+        var employee = await _context.Employees.FindAsync(id);
+        if (employee == null) throw new Exception("Employee not found");
+        
+        employee.DefaultShiftId = defaultShiftId;
+        employee.UpdatedAt = DateTime.UtcNow;
+        
         await _context.SaveChangesAsync();
     }
 

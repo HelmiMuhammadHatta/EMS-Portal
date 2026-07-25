@@ -3,6 +3,7 @@ using System;
 using EMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EMS.Infrastructure.Migrations
 {
     [DbContext(typeof(EmsDbContext))]
-    partial class EmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260725053735_AddFlexibleWorkShifts")]
+    partial class AddFlexibleWorkShifts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -208,9 +211,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Property<Guid>("PositionId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("RotationGroupId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -229,8 +229,6 @@ namespace EMS.Infrastructure.Migrations
                     b.HasIndex("ManagerId");
 
                     b.HasIndex("PositionId");
-
-                    b.HasIndex("RotationGroupId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -469,51 +467,6 @@ namespace EMS.Infrastructure.Migrations
                     b.ToTable("RolePermissions");
                 });
 
-            modelBuilder.Entity("EMS.Domain.Entities.ShiftRotationGroup", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("RotationStartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ShiftRotationGroups");
-                });
-
-            modelBuilder.Entity("EMS.Domain.Entities.ShiftRotationPattern", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<int>("CycleWeekNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("RotationGroupId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("WorkShiftId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WorkShiftId");
-
-                    b.HasIndex("RotationGroupId", "CycleWeekNumber")
-                        .IsUnique();
-
-                    b.ToTable("ShiftRotationPatterns");
-                });
-
             modelBuilder.Entity("EMS.Domain.Entities.ShiftSchedule", b =>
                 {
                     b.Property<Guid>("Id")
@@ -532,9 +485,6 @@ namespace EMS.Infrastructure.Migrations
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("IsManualOverride")
-                        .HasColumnType("boolean");
 
                     b.Property<Guid>("WorkShiftId")
                         .HasColumnType("uuid");
@@ -700,11 +650,6 @@ namespace EMS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EMS.Domain.Entities.ShiftRotationGroup", "RotationGroup")
-                        .WithMany("Employees")
-                        .HasForeignKey("RotationGroupId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("EMS.Domain.Entities.User", "User")
                         .WithOne("Employee")
                         .HasForeignKey("EMS.Domain.Entities.Employee", "UserId")
@@ -718,8 +663,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Navigation("Manager");
 
                     b.Navigation("Position");
-
-                    b.Navigation("RotationGroup");
 
                     b.Navigation("User");
                 });
@@ -809,25 +752,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("EMS.Domain.Entities.ShiftRotationPattern", b =>
-                {
-                    b.HasOne("EMS.Domain.Entities.ShiftRotationGroup", "RotationGroup")
-                        .WithMany("Patterns")
-                        .HasForeignKey("RotationGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EMS.Domain.Entities.WorkShift", "WorkShift")
-                        .WithMany()
-                        .HasForeignKey("WorkShiftId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("RotationGroup");
-
-                    b.Navigation("WorkShift");
-                });
-
             modelBuilder.Entity("EMS.Domain.Entities.ShiftSchedule", b =>
                 {
                     b.HasOne("EMS.Domain.Entities.Employee", "Employee")
@@ -900,13 +824,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Navigation("RolePermissions");
 
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("EMS.Domain.Entities.ShiftRotationGroup", b =>
-                {
-                    b.Navigation("Employees");
-
-                    b.Navigation("Patterns");
                 });
 
             modelBuilder.Entity("EMS.Domain.Entities.User", b =>
