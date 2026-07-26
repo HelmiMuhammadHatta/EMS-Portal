@@ -77,11 +77,33 @@ public class AttendanceService : IAttendanceService
             return new WorkShiftDto(schedule.WorkShift.Id, schedule.WorkShift.Name, schedule.WorkShift.StartTime, schedule.WorkShift.EndTime, schedule.WorkShift.IsOvernight, schedule.WorkShift.ToleranceMinutes);
         }
         
-        // 2. Check Employee Default Shift
+        // 2. Check Employee Rotation Group
         var employee = await _context.Employees
             .Include(e => e.DefaultShift)
+            .Include(e => e.RotationGroup!)
+                .ThenInclude(rg => rg.Patterns)
+                    .ThenInclude(p => p.WorkShift)
             .FirstOrDefaultAsync(e => e.Id == employeeId);
-            
+
+        if (employee?.RotationGroup != null && employee.RotationGroup.Patterns.Any())
+        {
+            var rotationGroup = employee.RotationGroup;
+            int cycleLength = rotationGroup.Patterns.Max(p => p.CycleWeekNumber);
+            if (cycleLength > 0)
+            {
+                int diffDays = (int)Math.Floor((targetDate - rotationGroup.RotationStartDate.Date).TotalDays);
+                int weekIndex = (int)Math.Floor((double)diffDays / 7.0);
+                int effectiveWeek = ((weekIndex % cycleLength) + cycleLength) % cycleLength + 1;
+                var pattern = rotationGroup.Patterns.FirstOrDefault(p => p.CycleWeekNumber == effectiveWeek);
+                if (pattern?.WorkShift != null)
+                {
+                    var ws = pattern.WorkShift;
+                    return new WorkShiftDto(ws.Id, ws.Name, ws.StartTime, ws.EndTime, ws.IsOvernight, ws.ToleranceMinutes);
+                }
+            }
+        }
+
+        // 3. Check Employee Default Shift
         if (employee?.DefaultShift != null)
         {
             return new WorkShiftDto(employee.DefaultShift.Id, employee.DefaultShift.Name, employee.DefaultShift.StartTime, employee.DefaultShift.EndTime, employee.DefaultShift.IsOvernight, employee.DefaultShift.ToleranceMinutes);

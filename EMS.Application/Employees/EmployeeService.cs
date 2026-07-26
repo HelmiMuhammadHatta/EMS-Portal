@@ -84,6 +84,7 @@ public class EmployeeService : IEmployeeService
             .Include(e => e.Manager)
             .Include(e => e.User)
             .Include(e => e.DefaultShift)
+            .Include(e => e.RotationGroup)
             .AsQueryable();
 
         if (!isRequesterAdmin)
@@ -133,7 +134,9 @@ public class EmployeeService : IEmployeeService
                 ManagerName = e.Manager?.FullName,
                 ManagerId = e.ManagerId,
                 DefaultShiftId = e.DefaultShiftId,
-                DefaultShiftName = e.DefaultShift?.Name
+                DefaultShiftName = e.DefaultShift?.Name,
+                RotationGroupId = e.RotationGroupId,
+                RotationGroupName = e.RotationGroup?.Name
             })
         };
     }
@@ -149,6 +152,7 @@ public class EmployeeService : IEmployeeService
             .Include(e => e.Manager)
             .Include(e => e.User)
             .Include(e => e.DefaultShift)
+            .Include(e => e.RotationGroup)
             .Include(e => e.Documents)
             .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -169,6 +173,8 @@ public class EmployeeService : IEmployeeService
             Email = employee.User?.Email ?? "",
             DefaultShiftId = employee.DefaultShiftId,
             DefaultShiftName = employee.DefaultShift?.Name,
+            RotationGroupId = employee.RotationGroupId,
+            RotationGroupName = employee.RotationGroup?.Name,
             Documents = employee.Documents.Select(d => new DocumentResponse
             {
                 Id = d.Id,
@@ -230,6 +236,7 @@ public class EmployeeService : IEmployeeService
             ManagerId = request.ManagerId,
             HireDate = request.HireDate.ToUniversalTime(),
             DefaultShiftId = request.DefaultShiftId,
+            RotationGroupId = request.RotationGroupId,
             Status = EmployeeStatus.Active,
             IsDeleted = false,
             CreatedAt = DateTime.UtcNow
@@ -276,6 +283,7 @@ public class EmployeeService : IEmployeeService
         employee.PositionId = request.PositionId;
         employee.ManagerId = request.ManagerId;
         employee.DefaultShiftId = request.DefaultShiftId;
+        employee.RotationGroupId = request.RotationGroupId;
         employee.Status = Enum.Parse<EmployeeStatus>(request.Status, true);
         employee.UpdatedAt = DateTime.UtcNow;
 

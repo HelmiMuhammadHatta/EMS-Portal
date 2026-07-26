@@ -211,6 +211,14 @@ export const EmployeeDetail = () => {
                       <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600"><Clock size={20} /></div>
                       <div><p className="text-xs text-slate-500">Status</p><p className="font-semibold text-slate-800">{emp.status}</p></div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600"><Clock size={20} /></div>
+                      <div><p className="text-xs text-slate-500">Default Shift</p><p className="font-semibold text-slate-800">{emp.defaultShiftName || 'Office Hour'}</p></div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"><Users size={20} /></div>
+                      <div><p className="text-xs text-slate-500">Grup Rotasi Shift</p><p className="font-semibold text-slate-800">{emp.rotationGroupName || '(None - Fixed Shift)'}</p></div>
+                    </div>
                   </div>
                 </div>
               </div>

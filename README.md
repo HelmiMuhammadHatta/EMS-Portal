@@ -26,8 +26,10 @@ Employee Management System (EMS) adalah platform *Human Resource* tingkat *enter
 *   **Multi-level Approval Workflow**: Permintaan cuti secara otomatis dirutekan ke *Manager* terkait untuk persetujuan (Approve/Reject) beserta catatan/alasan penolakan.
 *   **Filter Cuti Berbasis Gender (UU Ketenagakerjaan)**: Penyesuaian hak jenis cuti secara otomatis, seperti opsi Cuti Melahirkan (Maternity Leave) yang eksklusif untuk pekerja perempuan.
 
-### 🕒 Attendance System (Absensi)
+### 🕒 Attendance & Shift Rotation System (Absensi & Shift Rotasi)
 *   **Geofencing & Validasi Lokasi**: Menghitung jarak menggunakan *Haversine Formula* untuk memastikan karyawan *Clock-In/Out* di dalam batas radius kantor yang valid.
+*   **Shift Rotation Scheduling**: Pengaturan grup rotasi shift multi-minggu (Grup Rotasi & Pola Minggu), generator jadwal shift rotasi otomatis, serta *manual override* jadwal per karyawan.
+*   **Dynamic Effective Shift**: Resolusi otomatis jam kerja efektif karyawan saat absen berdasarkan jadwal override, grup rotasi mingguan, atau default shift (Office Hour).
 *   **Riwayat Absensi**: Pencatatan waktu kerja secara real-time dan akurat.
 
 ### 📊 Dashboard Analytics

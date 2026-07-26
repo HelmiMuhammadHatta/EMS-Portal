@@ -77,6 +77,8 @@ export const EmployeeList = () => {
     const formData = new FormData(e.currentTarget);
     const data: any = Object.fromEntries(formData.entries());
     if (!data.managerId) data.managerId = null;
+    if (!data.defaultShiftId) data.defaultShiftId = null;
+    if (!data.rotationGroupId) data.rotationGroupId = null;
     createMutation.mutate(data);
   };
 
@@ -84,13 +86,15 @@ export const EmployeeList = () => {
     e.preventDefault();
     if (!selectedEmployeeId) return;
     const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+    const data: any = Object.fromEntries(formData.entries());
     
     if (editData && editData.managerId) {
       data.managerId = editData.managerId;
     } else if (!data.managerId) {
-      data.managerId = null as any;
+      data.managerId = null;
     }
+    if (!data.defaultShiftId) data.defaultShiftId = null;
+    if (!data.rotationGroupId) data.rotationGroupId = null;
     
     updateMutation.mutate({ id: selectedEmployeeId, body: data });
   };

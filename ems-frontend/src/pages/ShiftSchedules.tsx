@@ -15,6 +15,7 @@ export const ShiftSchedules = () => {
   });
   
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState<'rotating' | 'all'>('rotating');
   
   const queryClient = useQueryClient();
 
@@ -90,6 +91,14 @@ export const ShiftSchedules = () => {
     return schedulesData.find((s: any) => s.employeeId === employeeId && s.date.startsWith(dateStr));
   };
 
+  const allEmployees = employeesData?.data?.data || [];
+  const displayEmployees = useMemo(() => {
+    if (filterType === 'rotating') {
+      return allEmployees.filter((emp: any) => emp.rotationGroupId);
+    }
+    return allEmployees;
+  }, [allEmployees, filterType]);
+
   return (
     <div className="flex flex-col min-h-full">
       <div className="bg-white px-8 py-6 border-b border-slate-200">
@@ -133,16 +142,35 @@ export const ShiftSchedules = () => {
                 <Settings2 size={16} />
                 {generateMutation.isPending ? 'Generating...' : 'Generate Auto Shifts'}
               </button>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as 'rotating' | 'all')}
+                className="py-2 px-3 bg-white border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 text-sm shadow-sm"
+              >
+                <option value="rotating">Karyawan Shift (Rotasi)</option>
+                <option value="all">Semua Karyawan</option>
+              </select>
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="text" 
                   placeholder="Search employee..." 
                   value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-md w-full focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-sm transition-all text-sm" 
-              />
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-md w-full focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-sm transition-all text-sm" 
+                />
               </div>
+            </div>
+          </div>
+
+          <div className="mb-4 text-sm text-slate-600 bg-blue-50 border border-blue-100 px-4 py-3 rounded-md flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-blue-800">Info:</span>
+              <span>
+                {filterType === 'rotating' 
+                  ? `Menampilkan ${displayEmployees.length} karyawan dengan sistem shift rotasi.` 
+                  : `Menampilkan total ${displayEmployees.length} karyawan.`}
+              </span>
             </div>
           </div>
 
@@ -164,16 +192,19 @@ export const ShiftSchedules = () => {
                   <tr>
                     <td colSpan={8} className="p-8 text-center text-slate-500">Loading schedules...</td>
                   </tr>
-                ) : employeesData?.data?.data?.length === 0 ? (
+                ) : displayEmployees.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="p-8 text-center text-slate-500">No employees found.</td>
                   </tr>
                 ) : (
-                  employeesData?.data?.data?.map((emp: any) => (
+                  displayEmployees.map((emp: any) => (
                     <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 border border-slate-200 sticky left-0 bg-white">
                         <div className="font-semibold text-slate-900">{emp.fullName}</div>
                         <div className="text-xs text-slate-500">{emp.departmentName || 'No Dept'}</div>
+                        {emp.rotationGroupName && (
+                          <div className="mt-1"><span className="inline-block text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded font-medium">{emp.rotationGroupName}</span></div>
+                        )}
                       </td>
                       {weekDates.map(date => {
                         const schedule = getScheduleForEmployeeAndDate(emp.id, date);
