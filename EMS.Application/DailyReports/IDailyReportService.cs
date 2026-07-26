@@ -10,6 +10,6 @@ public interface IDailyReportService
     Task<DailyReportDto> GetDailyReportByIdAsync(Guid id, Guid requesterUserId, bool isRequesterAdmin);
     Task<DailyReportDto> CreateDailyReportAsync(CreateDailyReportDto request, Guid requesterUserId);
     Task<DailyReportDto> UpdateDailyReportAsync(Guid id, UpdateDailyReportDto request, Guid requesterUserId);
-    Task<DailyReportDto> ReviewDailyReportAsync(Guid id, ReviewDailyReportDto request, Guid requesterUserId);
+    Task<DailyReportDto> ReviewDailyReportAsync(Guid id, ReviewDailyReportDto request, Guid requesterUserId, bool isRequesterAdmin);
     Task DeleteDailyReportAsync(Guid id, Guid requesterUserId);
 }

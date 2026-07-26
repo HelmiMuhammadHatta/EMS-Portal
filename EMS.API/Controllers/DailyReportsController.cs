@@ -65,7 +65,7 @@ public class DailyReportsController : ControllerBase
     [Authorize(Policy = "dailyreport.review")]
     public async Task<IActionResult> ReviewDailyReport(Guid id, [FromBody] ReviewDailyReportDto request)
     {
-        var result = await _dailyReportService.ReviewDailyReportAsync(id, request, GetUserId());
+        var result = await _dailyReportService.ReviewDailyReportAsync(id, request, GetUserId(), IsAdmin());
         return Ok(result);
     }
 

@@ -201,31 +201,33 @@ public class DailyReportService : IDailyReportService
         return await GetDailyReportByIdAsync(report.Id, requesterUserId, false);
     }
 
-    public async Task<DailyReportDto> ReviewDailyReportAsync(Guid id, ReviewDailyReportDto request, Guid requesterUserId)
+    public async Task<DailyReportDto> ReviewDailyReportAsync(Guid id, ReviewDailyReportDto request, Guid requesterUserId, bool isRequesterAdmin)
     {
         var reviewer = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == requesterUserId);
-        if (reviewer == null) throw new Exception("Employee profile not found.");
-
+        
         var report = await _context.DailyReports.FirstOrDefaultAsync(dr => dr.Id == id);
         if (report == null) throw new Exception("Daily report not found.");
 
-        // Validasi: Manager hanya bisa melihat dan memberi feedback pada laporan milik bawahan langsungnya (gunakan hierarchy ManagerId yang sudah ada)
-        // or Admin (if we consider admin can review, but requirement says manager)
-        var allowedIds = await GetAllowedEmployeeIdsAsync(requesterUserId, false); 
-        if (allowedIds == null || !allowedIds.Contains(report.EmployeeId))
+        if (!isRequesterAdmin)
         {
-            throw new Exception("Forbidden: You can only review reports of your subordinates.");
+            if (reviewer == null) throw new Exception("Employee profile not found.");
+
+            var allowedIds = await GetAllowedEmployeeIdsAsync(requesterUserId, false); 
+            if (allowedIds == null || !allowedIds.Contains(report.EmployeeId))
+            {
+                throw new Exception("Forbidden: You can only review reports of your subordinates.");
+            }
         }
 
         report.ManagerFeedback = request.ManagerFeedback;
         report.Status = DailyReportStatus.Reviewed;
-        report.ReviewedBy = reviewer.Id;
+        report.ReviewedBy = reviewer?.Id;
         report.ReviewedAt = DateTime.UtcNow;
         report.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
-        return await GetDailyReportByIdAsync(report.Id, requesterUserId, false);
+        return await GetDailyReportByIdAsync(report.Id, requesterUserId, isRequesterAdmin);
     }
 
     public async Task DeleteDailyReportAsync(Guid id, Guid requesterUserId)
