@@ -1,5 +1,6 @@
 using EMS.Application.Interfaces;
 using EMS.Domain.Entities;
+using EMS.Domain.Common.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ public class WorkShiftService : IWorkShiftService
     public async Task<WorkShiftDto> UpdateWorkShiftAsync(Guid id, UpdateWorkShiftRequest request)
     {
         var shift = await _context.WorkShifts.FindAsync(id);
-        if (shift == null) throw new Exception("WorkShift not found.");
+        if (shift == null) throw new NotFoundException("WorkShift not found.");
         
         shift.Name = request.Name;
         shift.StartTime = request.StartTime;
@@ -74,13 +75,13 @@ public class WorkShiftService : IWorkShiftService
     public async Task DeleteWorkShiftAsync(Guid id)
     {
         var shift = await _context.WorkShifts.FindAsync(id);
-        if (shift == null) throw new Exception("WorkShift not found.");
+        if (shift == null) throw new NotFoundException("WorkShift not found.");
         
         // Cannot delete if it is being used as default or in schedules
         bool inUse = await _context.Employees.AnyAsync(e => e.DefaultShiftId == id) ||
                      await _context.ShiftSchedules.AnyAsync(ss => ss.WorkShiftId == id);
                      
-        if (inUse) throw new Exception("Cannot delete WorkShift because it is currently assigned to one or more employees or schedules.");
+        if (inUse) throw new BadRequestException("Cannot delete WorkShift because it is currently assigned to one or more employees or schedules.");
         
         _context.WorkShifts.Remove(shift);
         await _context.SaveChangesAsync();
@@ -143,7 +144,7 @@ public class WorkShiftService : IWorkShiftService
     public async Task OverrideShiftAsync(Guid id, Guid workShiftId)
     {
         var existing = await _context.ShiftSchedules.FindAsync(id);
-        if (existing == null) throw new Exception("Shift Schedule not found.");
+        if (existing == null) throw new NotFoundException("Shift Schedule not found.");
 
         existing.WorkShiftId = workShiftId;
         existing.IsManualOverride = true;

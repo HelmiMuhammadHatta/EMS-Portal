@@ -1,5 +1,6 @@
 using EMS.Application.Attendances;
 using EMS.Application.Interfaces;
+using EMS.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -30,55 +31,34 @@ public class ShiftSchedulesController : ControllerBase
         if (endDate.Kind == DateTimeKind.Unspecified) endDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
         
         var result = await _workShiftService.GetShiftSchedulesAsync(employeeId, startDate, endDate);
-        return Ok(result);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
     }
 
     [HttpPost]
     [Authorize(Policy = "RequireManagerRole")] // Manager or Admin
     public async Task<IActionResult> AssignSchedule(AssignShiftScheduleRequest request)
     {
-        try
-        {
-            var userId = _currentUserService.UserId;
-            if (userId == null || userId == Guid.Empty) return Unauthorized();
-            
-            await _workShiftService.AssignShiftScheduleAsync(request, userId.Value);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var userId = _currentUserService.UserId;
+        if (userId == null || userId == Guid.Empty) return Unauthorized();
+        
+        await _workShiftService.AssignShiftScheduleAsync(request, userId.Value);
+        return Ok(ApiResponse<object>.SuccessResponse(new { }, "Schedule assigned successfully."));
     }
 
     [HttpPost("generate")]
     [Authorize(Policy = "RequireManagerRole")]
     public async Task<IActionResult> GenerateSchedule([FromBody] GenerateScheduleRequest request)
     {
-        try
-        {
-            await _rotationService.GenerateShiftScheduleAsync(request.StartDate, request.EndDate);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        await _rotationService.GenerateShiftScheduleAsync(request.StartDate, request.EndDate);
+        return Ok(ApiResponse<object>.SuccessResponse(new { }, "Schedule generated successfully."));
     }
 
     [HttpPut("{id}/override")]
     [Authorize(Policy = "RequireManagerRole")]
     public async Task<IActionResult> OverrideSchedule(Guid id, [FromBody] OverrideScheduleRequest request)
     {
-        try
-        {
-            await _workShiftService.OverrideShiftAsync(id, request.WorkShiftId);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        await _workShiftService.OverrideShiftAsync(id, request.WorkShiftId);
+        return Ok(ApiResponse<object>.SuccessResponse(new { }, "Schedule overridden successfully."));
     }
 }
 

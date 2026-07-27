@@ -34,18 +34,25 @@ public class ExceptionHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
         
-        // If it's a generic Exception thrown by our business logic, we can treat it as a Bad Request (400)
-        // so that the frontend can display the message properly.
-        if (exception.GetType() == typeof(Exception))
+        var statusCode = HttpStatusCode.InternalServerError;
+        var message = exception.Message;
+        
+        switch (exception)
         {
-            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-        }
-        else
-        {
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            case EMS.Domain.Common.Exceptions.NotFoundException:
+                statusCode = HttpStatusCode.NotFound;
+                break;
+            case EMS.Domain.Common.Exceptions.BadRequestException:
+                statusCode = HttpStatusCode.BadRequest;
+                break;
+            default:
+                statusCode = HttpStatusCode.InternalServerError;
+                break;
         }
 
-        var response = ApiResponse<object>.FailureResponse(exception.Message, new List<string> { exception.Message });
+        context.Response.StatusCode = (int)statusCode;
+
+        var response = ApiResponse<object>.FailureResponse(message, new List<string> { exception.Message });
         var jsonResponse = JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
         return context.Response.WriteAsync(jsonResponse);

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using EMS.Application.Interfaces;
 using EMS.Domain.Entities;
+using EMS.Domain.Common.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace EMS.Application.Attendances;
@@ -50,7 +51,7 @@ public class ShiftRotationService : IShiftRotationService
     public async Task<ShiftRotationGroupDto> UpdateGroupAsync(Guid id, UpdateShiftRotationGroupRequest request)
     {
         var group = await _context.ShiftRotationGroups.FindAsync(id) 
-            ?? throw new Exception("Group not found");
+            ?? throw new NotFoundException("Group not found");
             
         group.Name = request.Name;
         group.RotationStartDate = request.RotationStartDate.Date;
@@ -72,7 +73,7 @@ public class ShiftRotationService : IShiftRotationService
     public async Task AssignEmployeesToGroupAsync(Guid groupId, List<Guid> employeeIds)
     {
         var group = await _context.ShiftRotationGroups.FindAsync(groupId) 
-            ?? throw new Exception("Group not found");
+            ?? throw new NotFoundException("Group not found");
             
         var employees = await _context.Employees.Where(e => employeeIds.Contains(e.Id)).ToListAsync();
         foreach (var emp in employees)
@@ -96,7 +97,7 @@ public class ShiftRotationService : IShiftRotationService
     public async Task<ShiftRotationPatternDto> CreatePatternAsync(CreateShiftRotationPatternRequest request)
     {
         var exists = await _context.ShiftRotationPatterns.AnyAsync(p => p.RotationGroupId == request.RotationGroupId && p.CycleWeekNumber == request.CycleWeekNumber);
-        if (exists) throw new Exception("Pattern for this week number already exists.");
+        if (exists) throw new BadRequestException("Pattern for this week number already exists.");
         
         var pattern = new ShiftRotationPattern
         {
@@ -116,7 +117,7 @@ public class ShiftRotationService : IShiftRotationService
     public async Task<ShiftRotationPatternDto> UpdatePatternAsync(Guid id, UpdateShiftRotationPatternRequest request)
     {
         var pattern = await _context.ShiftRotationPatterns.Include(p => p.WorkShift).FirstOrDefaultAsync(p => p.Id == id) 
-            ?? throw new Exception("Pattern not found");
+            ?? throw new NotFoundException("Pattern not found");
             
         pattern.CycleWeekNumber = request.CycleWeekNumber;
         pattern.WorkShiftId = request.WorkShiftId;
@@ -148,6 +149,8 @@ public class ShiftRotationService : IShiftRotationService
             .Where(ss => ss.Date >= startDate.Date && ss.Date <= endDate.Date)
             .ToListAsync();
 
+        var existingSchedulesDict = existingSchedules.ToDictionary(ss => (ss.EmployeeId, ss.Date.Date));
+
         var currentUserId = _currentUserService.UserId ?? Guid.Empty;
 
         foreach (var group in groups)
@@ -170,7 +173,8 @@ public class ShiftRotationService : IShiftRotationService
 
                 foreach (var emp in group.Employees)
                 {
-                    var existing = existingSchedules.FirstOrDefault(ss => ss.EmployeeId == emp.Id && ss.Date == date);
+                    var key = (emp.Id, date);
+                    existingSchedulesDict.TryGetValue(key, out var existing);
                     
                     if (existing != null)
                     {
@@ -195,7 +199,7 @@ public class ShiftRotationService : IShiftRotationService
                             CreatedAt = DateTime.UtcNow
                         };
                         _context.ShiftSchedules.Add(newSchedule);
-                        existingSchedules.Add(newSchedule); // Add to local list to avoid duplicates in same loop
+                        existingSchedulesDict[key] = newSchedule; // Add to local dictionary to avoid duplicates in same loop
                     }
                 }
             }

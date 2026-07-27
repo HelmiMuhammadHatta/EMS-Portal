@@ -123,43 +123,6 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     await EMS.Infrastructure.Persistence.DataSeeder.SeedAsync(scope.ServiceProvider);
-    
-    // TEMPORARY: Update existing employees with NULL gender
-    var dbContext = scope.ServiceProvider.GetRequiredService<EMS.Application.Interfaces.IApplicationDbContext>();
-    var employeesWithoutGender = dbContext.Employees.Where(e => e.Gender == null).ToList();
-    if (employeesWithoutGender.Any())
-    {
-        foreach (var emp in employeesWithoutGender)
-        {
-            var name = emp.FullName.ToLower();
-            if (name.Contains("sri") || name.Contains("wati") || name.Contains("siti") || name.Contains("putri") || name.Contains("ayu") || name.Contains("ha"))
-            {
-                emp.Gender = EMS.Domain.Enums.Gender.Female;
-            }
-            else
-            {
-                emp.Gender = EMS.Domain.Enums.Gender.Male;
-            }
-        }
-        await dbContext.SaveChangesAsync(default);
-        
-        // Also re-initialize leave balances so they get the gender-specific ones if applicable
-        var leaveService = scope.ServiceProvider.GetRequiredService<EMS.Application.Leaves.ILeaveService>();
-        await leaveService.InitializeLeaveBalancesAsync(DateTime.UtcNow.Year);
-    }
-    
-    // TEMPORARY: Update user "dinda123" to have a proper FullName if she exists
-    var dindaUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email.Contains("dinda123"));
-    if (dindaUser != null)
-    {
-        var dindaEmp = await dbContext.Employees.FirstOrDefaultAsync(e => e.UserId == dindaUser.Id);
-        if (dindaEmp != null && (string.IsNullOrEmpty(dindaEmp.FullName) || dindaEmp.FullName == "dinda123" || dindaEmp.FullName.Contains("dinda123")))
-        {
-            dindaEmp.FullName = "Dinda Permatasari";
-            if (!dindaEmp.Gender.HasValue) dindaEmp.Gender = EMS.Domain.Enums.Gender.Female;
-            await dbContext.SaveChangesAsync(default);
-        }
-    }
 }
 
 // Configure the HTTP request pipeline.
