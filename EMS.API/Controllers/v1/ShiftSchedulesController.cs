@@ -37,7 +37,7 @@ public class ShiftSchedulesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "RequireManagerRole")] // Manager or Admin
+    [Authorize(Roles = "Manager,Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> AssignSchedule(AssignShiftScheduleRequest request)
@@ -50,7 +50,7 @@ public class ShiftSchedulesController : ControllerBase
     }
 
     [HttpPost("generate")]
-    [Authorize(Policy = "RequireManagerRole")]
+    [Authorize(Roles = "Manager,Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GenerateSchedule([FromBody] GenerateScheduleRequest request)
     {
@@ -59,7 +59,7 @@ public class ShiftSchedulesController : ControllerBase
     }
 
     [HttpPut("{id}/override")]
-    [Authorize(Policy = "RequireManagerRole")]
+    [Authorize(Roles = "Manager,Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> OverrideSchedule(Guid id, [FromBody] OverrideScheduleRequest request)
     {

@@ -75,9 +75,16 @@ public class ShiftRotationService : IShiftRotationService
         var groupExists = await _context.ShiftRotationGroups.AnyAsync(g => g.Id == groupId);
         if (!groupExists) throw new NotFoundException("Group not found");
             
-        await _context.Employees
+        var employeesToUpdate = await _context.Employees
             .Where(e => employeeIds.Contains(e.Id))
-            .ExecuteUpdateAsync(s => s.SetProperty(e => e.RotationGroupId, groupId));
+            .ToListAsync();
+            
+        foreach (var employee in employeesToUpdate)
+        {
+            employee.RotationGroupId = groupId;
+        }
+        
+        await _context.SaveChangesAsync();
     }
 
     public async Task<List<ShiftRotationPatternDto>> GetPatternsByGroupIdAsync(Guid groupId)
@@ -156,9 +163,12 @@ public class ShiftRotationService : IShiftRotationService
 
             var employeeIds = group.Employees.Select(e => e.Id).ToList();
 
+            var startUtc = DateTime.SpecifyKind(startDate.Date, DateTimeKind.Utc);
+            var endUtc = DateTime.SpecifyKind(endDate.Date, DateTimeKind.Utc);
+
             // Load existing schedules only for the current group's employees to save memory
             var existingSchedules = await _context.ShiftSchedules
-                .Where(ss => ss.Date >= startDate.Date && ss.Date <= endDate.Date && employeeIds.Contains(ss.EmployeeId))
+                .Where(ss => ss.Date >= startUtc && ss.Date <= endUtc && employeeIds.Contains(ss.EmployeeId))
                 .ToListAsync();
 
             var existingSchedulesDict = existingSchedules.ToDictionary(ss => (ss.EmployeeId, ss.Date.Date));
@@ -195,7 +205,7 @@ public class ShiftRotationService : IShiftRotationService
                         {
                             Id = Guid.NewGuid(),
                             EmployeeId = emp.Id,
-                            Date = date,
+                            Date = DateTime.SpecifyKind(date, DateTimeKind.Utc),
                             WorkShiftId = pattern.WorkShiftId,
                             IsManualOverride = false,
                             CreatedBy = currentUserId,

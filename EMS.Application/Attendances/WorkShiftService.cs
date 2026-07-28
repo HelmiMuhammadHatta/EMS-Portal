@@ -114,7 +114,7 @@ public class WorkShiftService : IWorkShiftService
 
     public async Task AssignShiftScheduleAsync(AssignShiftScheduleRequest request, Guid createdByUserId)
     {
-        var targetDate = request.Date.Date;
+        var targetDate = DateTime.SpecifyKind(request.Date.Date, DateTimeKind.Utc);
         
         var existing = await _context.ShiftSchedules
             .FirstOrDefaultAsync(ss => ss.EmployeeId == request.EmployeeId && ss.Date == targetDate);

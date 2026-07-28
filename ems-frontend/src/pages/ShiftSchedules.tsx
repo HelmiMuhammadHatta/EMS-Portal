@@ -86,9 +86,10 @@ export const ShiftSchedules = () => {
   };
 
   const getScheduleForEmployeeAndDate = (employeeId: string, date: Date) => {
-    if (!schedulesData) return null;
+    const schedulesArray = schedulesData?.data || schedulesData;
+    if (!Array.isArray(schedulesArray)) return null;
     const dateStr = date.toISOString().split('T')[0];
-    return schedulesData.find((s: any) => s.employeeId === employeeId && s.date.startsWith(dateStr));
+    return schedulesArray.find((s: any) => s.employeeId === employeeId && s.date.startsWith(dateStr));
   };
 
   const allEmployees = employeesData?.data?.data || [];

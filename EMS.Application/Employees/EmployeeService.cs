@@ -496,7 +496,7 @@ public class EmployeeService : IEmployeeService
         var totalCount = await query.CountAsync();
         var logs = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
-        var changedByUsers = logs.Where(l => l.ChangedBy.HasValue).Select(l => l.ChangedBy.Value).Distinct().ToList();
+        var changedByUsers = logs.Where(l => l.ChangedBy.HasValue).Select(l => l.ChangedBy.GetValueOrDefault()).Distinct().ToList();
         var userNames = await _context.Employees
             .Where(e => changedByUsers.Contains(e.UserId))
             .ToDictionaryAsync(e => e.UserId, e => e.FullName);
