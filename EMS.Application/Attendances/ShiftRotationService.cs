@@ -72,15 +72,12 @@ public class ShiftRotationService : IShiftRotationService
 
     public async Task AssignEmployeesToGroupAsync(Guid groupId, List<Guid> employeeIds)
     {
-        var group = await _context.ShiftRotationGroups.FindAsync(groupId) 
-            ?? throw new NotFoundException("Group not found");
+        var groupExists = await _context.ShiftRotationGroups.AnyAsync(g => g.Id == groupId);
+        if (!groupExists) throw new NotFoundException("Group not found");
             
-        var employees = await _context.Employees.Where(e => employeeIds.Contains(e.Id)).ToListAsync();
-        foreach (var emp in employees)
-        {
-            emp.RotationGroupId = groupId;
-        }
-        await _context.SaveChangesAsync();
+        await _context.Employees
+            .Where(e => employeeIds.Contains(e.Id))
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.RotationGroupId, groupId));
     }
 
     public async Task<List<ShiftRotationPatternDto>> GetPatternsByGroupIdAsync(Guid groupId)
@@ -140,25 +137,31 @@ public class ShiftRotationService : IShiftRotationService
 
     public async Task GenerateShiftScheduleAsync(DateTime startDate, DateTime endDate)
     {
-        var groups = await _context.ShiftRotationGroups
-            .Include(g => g.Patterns)
-            .Include(g => g.Employees)
-            .ToListAsync();
-
-        var existingSchedules = await _context.ShiftSchedules
-            .Where(ss => ss.Date >= startDate.Date && ss.Date <= endDate.Date)
-            .ToListAsync();
-
-        var existingSchedulesDict = existingSchedules.ToDictionary(ss => (ss.EmployeeId, ss.Date.Date));
-
         var currentUserId = _currentUserService.UserId ?? Guid.Empty;
 
-        foreach (var group in groups)
+        // Process group by group to avoid out-of-memory exception
+        var groupIds = await _context.ShiftRotationGroups.Select(g => g.Id).ToListAsync();
+
+        foreach (var groupId in groupIds)
         {
-            if (!group.Patterns.Any() || !group.Employees.Any()) continue;
+            var group = await _context.ShiftRotationGroups
+                .Include(g => g.Patterns)
+                .Include(g => g.Employees)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (group == null || !group.Patterns.Any() || !group.Employees.Any()) continue;
 
             int cycleLength = group.Patterns.Max(p => p.CycleWeekNumber);
             if (cycleLength <= 0) continue;
+
+            var employeeIds = group.Employees.Select(e => e.Id).ToList();
+
+            // Load existing schedules only for the current group's employees to save memory
+            var existingSchedules = await _context.ShiftSchedules
+                .Where(ss => ss.Date >= startDate.Date && ss.Date <= endDate.Date && employeeIds.Contains(ss.EmployeeId))
+                .ToListAsync();
+
+            var existingSchedulesDict = existingSchedules.ToDictionary(ss => (ss.EmployeeId, ss.Date.Date));
 
             for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
             {
@@ -203,8 +206,9 @@ public class ShiftRotationService : IShiftRotationService
                     }
                 }
             }
+            
+            // Save changes per group batch
+            await _context.SaveChangesAsync();
         }
-        
-        await _context.SaveChangesAsync();
     }
 }

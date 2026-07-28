@@ -85,7 +85,14 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // 5. JWT Authentication Setup
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "FallbackSecretKeyForJwtAuthenticationWhichIsVeryLongAndSecure12345!";
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
+{
+    if (builder.Environment.IsDevelopment())
+        jwtKey = "FallbackSecretKeyForJwtAuthenticationWhichIsVeryLongAndSecure12345!";
+    else
+        throw new InvalidOperationException("JWT Key is missing in appsettings/environment variables!");
+}
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
