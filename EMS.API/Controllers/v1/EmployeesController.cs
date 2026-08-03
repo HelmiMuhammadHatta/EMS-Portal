@@ -124,6 +124,15 @@ public class EmployeesController : ControllerBase
         return File(stream, contentType, fileName);
     }
 
+    [Authorize(Policy = "employee.read")]
+    [HttpGet("{id}/documents/{documentId}/view")]
+    public async Task<IActionResult> ViewDocument(Guid id, Guid documentId)
+    {
+        var (stream, contentType, fileName) = await _employeeService.DownloadDocumentAsync(id, documentId, GetRequesterId(), IsRequesterAdmin());
+        Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+        return File(stream, contentType);
+    }
+
     [Authorize(Policy = "employee.write")]
     [HttpDelete("{id}/documents/{documentId}")]
     public async Task<IActionResult> DeleteDocument(Guid id, Guid documentId)

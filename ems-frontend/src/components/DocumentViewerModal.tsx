@@ -21,8 +21,17 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const modalContainerRef = useRef<HTMLDivElement>(null);
 
-  const isPdf = docInfo?.fileName.toLowerCase().endsWith('.pdf') ?? false;
-  const isImage = docInfo ? /\.(jpg|jpeg|png)$/i.test(docInfo.fileName) : false;
+  // Safely determine filename, PDF status, and image status
+  const fileName = docInfo?.fileName 
+    || (docInfo?.filePath ? docInfo.filePath.split('/').pop() : null) 
+    || `${docInfo?.documentType || 'dokumen'}.pdf`;
+
+  const isPdf = fileName.toLowerCase().endsWith('.pdf') 
+    || docInfo?.documentType?.toLowerCase() === 'pdf' 
+    || (docInfo?.filePath && docInfo.filePath.toLowerCase().endsWith('.pdf'));
+
+  const isImage = /\.(jpg|jpeg|png|webp)$/i.test(fileName) 
+    || (docInfo?.filePath && /\.(jpg|jpeg|png|webp)$/i.test(docInfo.filePath));
 
   useEffect(() => {
     if (!isOpen || !docInfo) {
@@ -49,7 +58,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
 
         const mimeType = isPdf 
           ? 'application/pdf' 
-          : (docInfo.fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+          : (fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
           
         const typedBlob = new Blob([blob], { type: mimeType });
         const url = window.URL.createObjectURL(typedBlob);
@@ -77,7 +86,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     if (!blobUrl) return;
     const a = document.createElement('a');
     a.href = blobUrl;
-    a.download = docInfo.fileName;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -98,6 +107,9 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     }
   };
 
+  const formattedDate = docInfo.uploadedAt ? format(new Date(docInfo.uploadedAt), 'd MMM yyyy, HH:mm') : '-';
+  const fileSizeText = docInfo.fileSize ? `${(docInfo.fileSize / 1024).toFixed(1)} KB • ` : '';
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 transition-all duration-300">
       <div 
@@ -117,14 +129,14 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
-                  {docInfo.documentType}
+                  {docInfo.documentType || 'DOKUMEN'}
                 </span>
-                <h3 className="text-sm font-bold text-[#0F172A] truncate" title={docInfo.fileName}>
-                  {docInfo.fileName}
+                <h3 className="text-sm font-bold text-[#0F172A] truncate" title={fileName}>
+                  {fileName}
                 </h3>
               </div>
               <p className="text-xs text-[#64748B]">
-                {(docInfo.fileSize / 1024).toFixed(1)} KB • Diunggah {format(new Date(docInfo.uploadedAt), 'd MMM yyyy, HH:mm')}
+                {fileSizeText}Diunggah {formattedDate}
               </p>
             </div>
           </div>
@@ -169,7 +181,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
           )}
 
           {error && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white p-6 text-center">
               <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4 border border-red-100">
                 <AlertCircle size={32} className="text-red-500" strokeWidth={1.5} />
               </div>
@@ -192,22 +204,28 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
             </div>
           )}
 
-          {/* IFrame PDF Viewer (Native Browser Viewer) */}
+          {/* Native PDF Object Viewer with iframe fallback */}
           {isPdf && !loading && !error && blobUrl && (
-            <iframe 
-              src={blobUrl} 
-              title={docInfo.fileName}
+            <object
+              data={blobUrl}
+              type="application/pdf"
               className="w-full h-full border-0"
-              style={{ display: 'block' }}
-            />
+            >
+              <iframe 
+                src={blobUrl} 
+                title={fileName}
+                className="w-full h-full border-0"
+                style={{ display: 'block' }}
+              />
+            </object>
           )}
 
           {/* Image Viewer */}
           {isImage && !loading && !error && blobUrl && (
-            <div className="my-auto flex items-center justify-center w-full h-full p-4">
+            <div className="my-auto flex items-center justify-center w-full h-full p-4 overflow-auto">
               <img
                 src={blobUrl}
-                alt={docInfo.fileName}
+                alt={fileName}
                 className="max-h-full max-w-full object-contain rounded-xl shadow-lg border border-[#E2E8F0] bg-white"
               />
             </div>
@@ -220,7 +238,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
                 <FileText size={32} className="text-[#64748B]" strokeWidth={1.5} />
               </div>
               <p className="text-base font-bold text-[#0F172A] mb-1">Pratinjau Tidak Tersedia</p>
-              <p className="text-sm text-[#64748B] mb-6">Format file ini belum didukung untuk dibaca secara langsung (native). Silakan unduh untuk membukanya.</p>
+              <p className="text-sm text-[#64748B] mb-6">Format file ini belum didukung untuk dibaca secara langsung. Silakan unduh untuk membukanya.</p>
               <button
                 onClick={handleDownload}
                 className="px-5 py-2.5 w-full bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors shadow-sm"
@@ -234,3 +252,4 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     </div>
   );
 };
+

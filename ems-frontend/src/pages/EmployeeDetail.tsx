@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { employeeService } from '../services/apiService';
 import { toast } from 'sonner';
-import { useState } from 'react';
-import { ArrowLeft, User, Briefcase, Building2, Calendar, FileText, Clock, Upload, Trash2, Download, Users } from 'lucide-react';
+import { ArrowLeft, User, Briefcase, Building2, Calendar, FileText, Clock, Upload, Trash2, Download, Users, Eye } from 'lucide-react';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 
 export const EmployeeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,16 @@ export const EmployeeDetail = () => {
   const [docFile, setDocFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [auditPage, setAuditPage] = useState(1);
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+
+  const handlePreviewDoc = (doc: any) => {
+    const fileName = doc.filePath?.split('/').pop() || `${doc.documentType}.pdf`;
+    setPreviewDoc({
+      ...doc,
+      fileName,
+      fileSize: 0
+    });
+  };
 
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -276,11 +287,14 @@ export const EmployeeDetail = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-100 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleDownloadDoc(doc.id, doc.documentType, doc.filePath)} className="flex-1 flex items-center justify-center gap-1.5 p-2 text-sm font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-slate-200 hover:border-blue-200" title="Download">
-                        <Download size={16} /> Download
+                      <button onClick={() => handlePreviewDoc(doc)} className="flex-1 flex items-center justify-center gap-1.5 p-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm" title="Preview / Baca PDF">
+                        <Eye size={16} /> Pratinjau
                       </button>
-                      <button onClick={() => handleDeleteDoc(doc.id)} className="flex-1 flex items-center justify-center gap-1.5 p-2 text-sm font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-slate-200 hover:border-red-200" title="Delete">
-                        <Trash2 size={16} /> Delete
+                      <button onClick={() => handleDownloadDoc(doc.id, doc.documentType, doc.filePath)} className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-slate-200 hover:border-blue-200" title="Download">
+                        <Download size={16} />
+                      </button>
+                      <button onClick={() => handleDeleteDoc(doc.id)} className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-slate-200 hover:border-red-200" title="Delete">
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
@@ -449,6 +463,13 @@ export const EmployeeDetail = () => {
           </div>
         </div>
       )}
+      {/* Document Viewer Modal */}
+      <DocumentViewerModal
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        document={previewDoc}
+        fetchDocumentBlob={async () => previewDoc ? employeeService.viewDocument(id!, previewDoc.id) : new Blob()}
+      />
     </div>
   );
 };
