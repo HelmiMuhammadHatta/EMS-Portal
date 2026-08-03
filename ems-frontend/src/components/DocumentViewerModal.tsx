@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, Maximize, Minimize, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { X, Download, Maximize, Minimize, FileText, Loader2, AlertCircle, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { format } from 'date-fns';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// Set up PDF worker using CDN
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocumentViewerModalProps {
   isOpen: boolean;
@@ -19,6 +25,12 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // react-pdf states
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1.0);
+
   const modalContainerRef = useRef<HTMLDivElement>(null);
 
   // Safely determine filename, PDF status, and image status
@@ -46,6 +58,10 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     let isMounted = true;
     setLoading(true);
     setError(null);
+    // Reset PDF states when opening a new document
+    setNumPages(0);
+    setPageNumber(1);
+    setScale(1.0);
 
     const load = async () => {
       try {
@@ -105,6 +121,19 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
       }
       setIsFullscreen(false);
     }
+  };
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setPageNumber(1);
+  };
+
+  const changePage = (offset: number) => {
+    setPageNumber(prevPageNumber => prevPageNumber + offset);
+  };
+
+  const changeScale = (offset: number) => {
+    setScale(prevScale => Math.max(0.5, Math.min(3.0, prevScale + offset)));
   };
 
   const formattedDate = docInfo.uploadedAt ? format(new Date(docInfo.uploadedAt), 'd MMM yyyy, HH:mm') : '-';
@@ -169,8 +198,55 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
           </div>
         </div>
 
+        {/* PDF Specific Controls (Pagination & Zoom) */}
+        {isPdf && !loading && !error && blobUrl && numPages > 0 && (
+          <div className="px-4 py-2 bg-[#F1F5F9] border-b border-[#E2E8F0] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <button
+                disabled={pageNumber <= 1}
+                onClick={() => changePage(-1)}
+                className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-sm font-medium text-slate-700 mx-2">
+                Halaman {pageNumber} dari {numPages}
+              </span>
+              <button
+                disabled={pageNumber >= numPages}
+                onClick={() => changePage(1)}
+                className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2 border-l border-slate-300 pl-4 ml-2">
+              <button
+                onClick={() => changeScale(-0.25)}
+                disabled={scale <= 0.5}
+                className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Perkecil"
+              >
+                <ZoomOut size={18} />
+              </button>
+              <span className="text-xs font-semibold text-slate-600 w-12 text-center">
+                {Math.round(scale * 100)}%
+              </span>
+              <button
+                onClick={() => changeScale(0.25)}
+                disabled={scale >= 3.0}
+                className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Perbesar"
+              >
+                <ZoomIn size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Viewer Content Area */}
-        <div className="flex-1 overflow-hidden relative flex flex-col items-center justify-center bg-[#F1F5F9]">
+        <div className="flex-1 overflow-auto relative flex flex-col items-center justify-center bg-[#CBD5E1]/30">
           
           {loading && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F1F5F9]/80 backdrop-blur-sm">
@@ -204,35 +280,52 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
             </div>
           )}
 
-          {/* Native PDF Object Viewer with iframe fallback */}
+          {/* React-PDF Viewer */}
           {isPdf && !loading && !error && blobUrl && (
-            <object
-              data={blobUrl}
-              type="application/pdf"
-              className="w-full h-full border-0"
-            >
-              <iframe 
-                src={blobUrl} 
-                title={fileName}
-                className="w-full h-full border-0"
-                style={{ display: 'block' }}
-              />
-            </object>
+            <div className="flex justify-center min-w-max p-4">
+              <Document
+                file={blobUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                loading={
+                  <div className="flex flex-col items-center gap-2 text-slate-500 p-8">
+                    <Loader2 size={28} className="animate-spin text-blue-500" /> 
+                    <span className="text-sm font-medium">Merender PDF...</span>
+                  </div>
+                }
+                error={
+                  <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3 border border-red-100 max-w-sm">
+                    <AlertCircle size={24} className="shrink-0" />
+                    <div>
+                      <p className="font-semibold text-sm">Gagal merender dokumen PDF.</p>
+                      <p className="text-xs mt-0.5">Silakan unduh file untuk membukanya secara lokal.</p>
+                    </div>
+                  </div>
+                }
+              >
+                <Page 
+                  pageNumber={pageNumber} 
+                  scale={scale} 
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="shadow-xl"
+                />
+              </Document>
+            </div>
           )}
 
           {/* Image Viewer */}
           {isImage && !loading && !error && blobUrl && (
-            <div className="my-auto flex items-center justify-center w-full h-full p-4 overflow-auto">
+            <div className="my-auto flex items-center justify-center w-full h-full p-4">
               <img
                 src={blobUrl}
                 alt={fileName}
-                className="max-h-full max-w-full object-contain rounded-xl shadow-lg border border-[#E2E8F0] bg-white"
+                className="max-h-[85vh] max-w-full object-contain rounded-xl shadow-lg border border-[#E2E8F0] bg-white"
               />
             </div>
           )}
 
           {/* Fallback for other file types */}
-          {!isPdf && !isImage && !loading && !error && (
+          {!isPdf && !isImage && !loading && !error && blobUrl && (
             <div className="my-auto text-center p-8 bg-white rounded-2xl border border-[#E2E8F0] shadow-sm max-w-md w-full">
               <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
                 <FileText size={32} className="text-[#64748B]" strokeWidth={1.5} />
@@ -252,4 +345,3 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     </div>
   );
 };
-

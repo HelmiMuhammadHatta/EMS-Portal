@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { LayoutDashboard, Users, Calendar, Clock, LogOut, Menu, Settings as SettingsIcon, FileText, CalendarClock, UserPlus } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Clock, LogOut, Menu, Settings as SettingsIcon, FileText, CalendarClock, UserPlus, Briefcase } from 'lucide-react';
 import { useState } from 'react';
 
 export const Layout = () => {
@@ -23,6 +23,7 @@ export const Layout = () => {
     { path: '/attendance', label: 'Attendance', icon: <Clock size={20} /> },
     ...(hasPermission('employee.read') ? [{ path: '/shift-schedules', label: 'Jadwal Shift', icon: <CalendarClock size={20} /> }] : []),
     { path: '/candidates', label: 'Recruitment', icon: <UserPlus size={20} /> },
+    { path: '/job-openings', label: 'Job Openings', icon: <Briefcase size={20} /> },
     { path: '/daily-reports', label: 'Daily Reports', icon: <FileText size={20} /> },
     ...(user?.role === 'Admin' || user?.role === 'HR' ? [{ path: '/settings', label: 'Settings', icon: <SettingsIcon size={20} /> }] : []),
   ];

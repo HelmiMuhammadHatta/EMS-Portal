@@ -20,6 +20,7 @@ import { CandidateList } from './pages/CandidateList';
 import { CandidateDetail } from './pages/CandidateDetail';
 import { Careers } from './pages/Careers';
 import { CareerApply } from './pages/CareerApply';
+import { JobOpenings } from './pages/JobOpenings';
 
 
 const queryClient = new QueryClient();
@@ -58,6 +59,11 @@ export function App() {
             <Route path="/candidates/:id" element={
               <ProtectedRoute allowedRoles={['Admin', 'Manager', 'HR']}>
                 <CandidateDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/job-openings" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Manager', 'HR']}>
+                <JobOpenings />
               </ProtectedRoute>
             } />
           </Route>
