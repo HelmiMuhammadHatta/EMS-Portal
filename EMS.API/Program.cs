@@ -145,6 +145,8 @@ app.UseSerilogRequestLogging();
 
 app.UseRateLimiter();
 
+app.UseRouting();
+
 app.UseCors("AllowViteDevServer");
 
 app.UseStaticFiles(); // Serve static files like uploaded photos

@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.Cors;
+
 namespace EMS.API.Controllers.v1;
 
 [ApiController]
 [Route("api/v1/candidates")]
 [Authorize] // HR/Admin only
+[EnableCors("AllowViteDevServer")]
 public class CandidatesController : ControllerBase
 {
     private readonly ICandidateService _candidateService;

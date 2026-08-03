@@ -314,6 +314,16 @@ public static class DataSeeder
         }
         await context.SaveChangesAsync();
 
+        // Pindahkan JobOpenings ke posisi default per departemennya
+        var jobOpenings = await context.JobOpenings.ToListAsync();
+        foreach (var job in jobOpenings)
+        {
+            var defaultPos = newlyCreatedPositions.FirstOrDefault(p => p.DepartmentId == job.DepartmentId) 
+                             ?? exec1;
+            job.PositionId = defaultPos.Id;
+        }
+        await context.SaveChangesAsync();
+
         // SEKARANG kita bisa hapus posisi lama karena semua foreign key sudah diganti ke posisi baru
         context.Positions.RemoveRange(allOldPositions);
         await context.SaveChangesAsync();
