@@ -3,8 +3,27 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { candidateService, assessmentService } from '../services/apiService';
 import { toast } from 'sonner';
-import { ArrowLeft, Mail, Phone, Briefcase, Calendar, FileText, CheckCircle, Link as LinkIcon, X, Award, BarChart3, UserCheck, AlertCircle, Camera, Eye, ShieldCheck } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  Mail, 
+  Phone, 
+  Briefcase, 
+  Calendar, 
+  FileText, 
+  CheckCircle, 
+  Link as LinkIcon, 
+  X, 
+  Award, 
+  BarChart3, 
+  UserCheck, 
+  AlertCircle, 
+  Camera, 
+  Eye, 
+  ShieldCheck, 
+  Download 
+} from 'lucide-react';
 import { format } from 'date-fns';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 
 export const CandidateDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +38,29 @@ export const CandidateDetail = () => {
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [convertData, setConvertData] = useState({ managerId: '', defaultShiftId: '', rotationGroupId: '' });
   const [convertedInfo, setConvertedInfo] = useState<{employeeId: string, tempPassword: string} | null>(null);
+
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+
+  const handlePreviewDocument = (doc: any) => {
+    setPreviewDoc(doc);
+  };
+
+  const handleDownloadDocument = async (doc: any) => {
+    try {
+      const blob = await candidateService.downloadDocument(candidate.id, doc.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Mengunduh ${doc.fileName}`);
+    } catch (err: any) {
+      toast.error('Gagal mengunduh dokumen.');
+    }
+  };
 
   const { data: candidate, isLoading: isCandidateLoading } = useQuery({
     queryKey: ['candidate', id],
@@ -246,51 +288,69 @@ export const CandidateDetail = () => {
                 <FileText size={20} className="text-blue-500"/>
                 Dokumen Berkas Lamaran ({candidate.documents?.length || 0})
               </h3>
+              <span className="text-xs text-slate-500 font-medium hidden sm:inline-flex items-center gap-1.5">
+                <Eye size={13} className="text-blue-500" /> Klik untuk membaca / pratinjau PDF langsung
+              </span>
             </div>
             <div className="p-6">
               {(!candidate.documents || candidate.documents.length === 0) ? (
                 <p className="text-xs text-slate-500 italic">Tidak ada berkas dokumen yang diunggah.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {candidate.documents.map((doc: any) => (
-                    <div key={doc.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                          <FileText size={20} />
+                  {candidate.documents.map((doc: any) => {
+                    const isPdf = doc.fileName.toLowerCase().endsWith('.pdf');
+                    return (
+                      <div 
+                        key={doc.id} 
+                        className="p-4 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md"
+                      >
+                        <div 
+                          onClick={() => handlePreviewDocument(doc)}
+                          className="flex items-start gap-3 mb-3 cursor-pointer"
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
+                            isPdf ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                          }`}>
+                            <FileText size={20} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                                {doc.documentType}
+                              </span>
+                              {isPdf && (
+                                <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-red-50 text-red-600 border border-red-100">
+                                  PDF
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-semibold text-slate-800 truncate group-hover:text-blue-600 transition-colors" title={doc.fileName}>
+                              {doc.fileName}
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              {(doc.fileSize / 1024).toFixed(1)} KB · {format(new Date(doc.uploadedAt), 'd MMM yyyy')}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 mb-1 border border-blue-100">
-                            {doc.documentType}
-                          </span>
-                          <p className="text-xs font-semibold text-slate-800 truncate" title={doc.fileName}>{doc.fileName}</p>
-                          <p className="text-[11px] text-slate-500">
-                            {(doc.fileSize / 1024).toFixed(1)} KB · {format(new Date(doc.uploadedAt), 'd MMM yyyy')}
-                          </p>
+
+                        <div className="flex items-center gap-2 pt-3 border-t border-slate-200/80">
+                          <button
+                            onClick={() => handlePreviewDocument(doc)}
+                            className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Eye size={14} /> Baca PDF
+                          </button>
+                          <button
+                            onClick={() => handleDownloadDocument(doc)}
+                            title="Unduh Berkas ke Perangkat"
+                            className="p-2 bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center cursor-pointer shadow-sm"
+                          >
+                            <Download size={15} />
+                          </button>
                         </div>
                       </div>
-
-                      <button
-                        onClick={async () => {
-                          try {
-                            const blob = await candidateService.downloadDocument(candidate.id, doc.id);
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = doc.fileName;
-                            document.body.appendChild(a);
-                            a.click();
-                            a.remove();
-                            window.URL.revokeObjectURL(url);
-                          } catch (err: any) {
-                            toast.error('Gagal mengunduh dokumen.');
-                          }
-                        }}
-                        className="w-full py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <FileText size={14} /> Unduh Berkas
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -661,6 +721,14 @@ export const CandidateDetail = () => {
           </div>
         </div>
       )}
+
+      {/* In-App PDF & Document Reader / Viewer Modal */}
+      <DocumentViewerModal
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        document={previewDoc}
+        fetchDocumentBlob={() => candidateService.downloadDocument(candidate.id, previewDoc.id)}
+      />
 
     </div>
   );

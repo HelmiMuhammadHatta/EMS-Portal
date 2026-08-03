@@ -154,4 +154,19 @@ public class CandidatesController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
+
+    [HttpGet("{id}/documents/{documentId}/view")]
+    public async Task<IActionResult> ViewCandidateDocument(Guid id, Guid documentId)
+    {
+        try
+        {
+            var (stream, contentType, fileName) = await _candidateService.DownloadCandidateDocumentAsync(id, documentId);
+            Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+            return File(stream, contentType);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }
