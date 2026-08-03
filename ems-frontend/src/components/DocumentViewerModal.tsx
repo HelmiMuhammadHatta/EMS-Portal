@@ -80,6 +80,10 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
         const blob = await fetchDocumentBlob();
         if (!isMounted) return;
 
+        if (!blob || blob.size === 0) {
+          throw new Error('Berkas tidak ditemukan atau kosong.');
+        }
+
         const mimeType = isPdf 
           ? 'application/pdf' 
           : (docInfo.fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
@@ -121,7 +125,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, docInfo]);
+  }, [isOpen, docInfo]); // Remove fetchDocumentBlob from dependencies to avoid loop
 
   // Render PDF Pages to Canvases
   useEffect(() => {
@@ -150,7 +154,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
           if (!canvas) {
             canvas = document.createElement('canvas');
             canvas.setAttribute('data-page', pageNum.toString());
-            canvas.className = 'shadow-lg rounded-lg bg-white my-3 border border-slate-200 block mx-auto transition-transform';
+            canvas.className = 'shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-lg bg-white my-4 block mx-auto transition-transform';
             container.appendChild(canvas);
           }
 
@@ -216,76 +220,76 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 transition-all duration-300">
       <div 
         ref={modalContainerRef}
-        className={`bg-slate-900 rounded-2xl w-full flex flex-col shadow-2xl border border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200 transition-all ${
+        className={`bg-[#F8FAFC] rounded-[12px] w-full flex flex-col shadow-2xl border border-[#E2E8F0] overflow-hidden animate-in zoom-in-95 duration-200 transition-all ${
           isFullscreen ? 'h-screen max-w-full rounded-none' : 'max-w-5xl h-[92vh]'
         }`}
       >
-        {/* Top Control Bar */}
-        <div className="px-4 py-3 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
+        {/* Top Control Bar - Bright Theme */}
+        <div className="px-5 py-3.5 bg-white flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8F0] shrink-0">
           
           {/* File Info */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
-              <FileText size={18} />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+              <FileText size={20} strokeWidth={1.5} />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
                   {docInfo.documentType}
                 </span>
-                <h3 className="text-sm font-bold text-slate-100 truncate" title={docInfo.fileName}>
+                <h3 className="text-sm font-bold text-[#0F172A] truncate" title={docInfo.fileName}>
                   {docInfo.fileName}
                 </h3>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {(docInfo.fileSize / 1024).toFixed(1)} KB · Diunggah {format(new Date(docInfo.uploadedAt), 'd MMM yyyy, HH:mm')}
+              <p className="text-xs text-[#64748B]">
+                {(docInfo.fileSize / 1024).toFixed(1)} KB • Diunggah {format(new Date(docInfo.uploadedAt), 'd MMM yyyy, HH:mm')}
               </p>
             </div>
           </div>
 
           {/* PDF Viewer Controls (Zoom, Rotate, Navigation) */}
           {isPdf && !loading && !error && (
-            <div className="flex items-center gap-1.5 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700/80">
+            <div className="flex items-center gap-1.5 bg-[#F1F5F9] px-3 py-1.5 rounded-xl border border-[#E2E8F0]">
               {/* Zoom Out */}
               <button 
                 onClick={() => setScale(prev => Math.max(0.6, prev - 0.2))}
-                className="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
                 title="Perkecil (-)"
               >
-                <ZoomOut size={15} />
+                <ZoomOut size={16} strokeWidth={1.5} />
               </button>
 
-              <span className="text-xs font-mono font-medium text-slate-300 px-1 min-w-[44px] text-center">
+              <span className="text-xs font-mono font-bold text-[#0F172A] px-1.5 min-w-[50px] text-center">
                 {Math.round(scale * 100)}%
               </span>
 
               {/* Zoom In */}
               <button 
                 onClick={() => setScale(prev => Math.min(2.5, prev + 0.2))}
-                className="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
                 title="Perbesar (+)"
               >
-                <ZoomIn size={15} />
+                <ZoomIn size={16} strokeWidth={1.5} />
               </button>
 
-              <div className="h-4 w-px bg-slate-700 mx-1" />
+              <div className="h-5 w-px bg-slate-300 mx-1.5" />
 
               {/* Rotate */}
               <button 
                 onClick={() => setRotation(prev => (prev + 90) % 360)}
-                className="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
                 title="Putar 90°"
               >
-                <RotateCw size={15} />
+                <RotateCw size={16} strokeWidth={1.5} />
               </button>
 
               {/* View Mode Toggle */}
               <button 
                 onClick={() => setViewMode(prev => prev === 'all' ? 'single' : 'all')}
-                className="px-2 py-0.5 text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-slate-700 rounded-md transition-colors cursor-pointer"
+                className="px-2.5 py-1 ml-1 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors cursor-pointer shadow-sm"
                 title={viewMode === 'all' ? 'Mode Satu Halaman' : 'Mode Semua Halaman'}
               >
                 {viewMode === 'all' ? 'Semua Hal' : 'Per Hal'}
@@ -294,23 +298,23 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
               {/* Single page navigation */}
               {viewMode === 'single' && numPages > 1 && (
                 <>
-                  <div className="h-4 w-px bg-slate-700 mx-1" />
+                  <div className="h-5 w-px bg-slate-300 mx-1.5" />
                   <button 
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage <= 1}
-                    className="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded disabled:opacity-30 cursor-pointer"
+                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg disabled:opacity-30 cursor-pointer"
                   >
-                    <ChevronLeft size={15} />
+                    <ChevronLeft size={16} strokeWidth={1.5} />
                   </button>
-                  <span className="text-xs text-slate-300 px-1">
+                  <span className="text-xs font-semibold text-slate-700 px-1.5">
                     {currentPage} / {numPages}
                   </span>
                   <button 
                     onClick={() => setCurrentPage(prev => Math.min(numPages, prev + 1))}
                     disabled={currentPage >= numPages}
-                    className="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded disabled:opacity-30 cursor-pointer"
+                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg disabled:opacity-30 cursor-pointer"
                   >
-                    <ChevronRight size={15} />
+                    <ChevronRight size={16} strokeWidth={1.5} />
                   </button>
                 </>
               )}
@@ -323,64 +327,68 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
               <>
                 <button
                   onClick={() => window.open(blobUrl, '_blank')}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer"
+                  className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#E2E8F0] shadow-sm cursor-pointer"
                   title="Buka di tab baru browser"
                 >
-                  <ExternalLink size={14} />
+                  <ExternalLink size={15} strokeWidth={1.5} />
                   <span className="hidden sm:inline">Tab Baru</span>
                 </button>
                 <button
                   onClick={handleDownload}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  className="px-3.5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
                   title="Unduh file"
                 >
-                  <Download size={14} />
+                  <Download size={15} strokeWidth={1.5} />
                   <span className="hidden sm:inline">Unduh</span>
                 </button>
               </>
             )}
             <button
               onClick={toggleFullscreen}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition-colors cursor-pointer"
+              className="p-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-900 border border-[#E2E8F0] shadow-sm rounded-xl transition-colors cursor-pointer ml-2"
               title={isFullscreen ? "Keluar Layar Penuh" : "Layar Penuh"}
             >
-              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              {isFullscreen ? <Minimize2 size={16} strokeWidth={1.5} /> : <Maximize2 size={16} strokeWidth={1.5} />}
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white rounded-xl transition-colors cursor-pointer ml-1"
+              className="p-2 bg-white hover:bg-[#FEE2E2] text-slate-500 hover:text-[#DC2626] border border-[#E2E8F0] shadow-sm rounded-xl transition-colors cursor-pointer ml-1"
               title="Tutup pratinjau (Esc)"
             >
-              <X size={18} />
+              <X size={16} strokeWidth={1.5} />
             </button>
           </div>
         </div>
 
         {/* Viewer Content Body */}
-        <div className="flex-1 bg-slate-950/90 relative overflow-auto p-4 flex flex-col items-center justify-start min-h-0">
+        <div className="flex-1 bg-[#EEF2F7] relative overflow-auto p-4 md:p-6 flex flex-col items-center justify-start min-h-0">
           {loading && (
-            <div className="my-auto flex flex-col items-center justify-center gap-3 p-8 text-slate-300">
-              <Loader2 size={38} className="animate-spin text-blue-500" />
-              <p className="text-sm font-semibold">Memuat dan membaca dokumen PDF...</p>
-              <p className="text-xs text-slate-500">Mempersiapkan pratinjau visual di layar Anda</p>
+            <div className="my-auto flex flex-col items-center justify-center gap-3 p-8">
+              <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-blue-100">
+                <Loader2 size={28} className="animate-spin text-[#2563EB]" />
+              </div>
+              <p className="text-sm font-semibold text-[#0F172A] mt-2">Memuat dokumen...</p>
+              <p className="text-xs text-[#64748B]">Mempersiapkan pratinjau PDF di layar Anda</p>
             </div>
           )}
 
           {error && (
-            <div className="my-auto max-w-md bg-red-950/40 border border-red-800 text-red-200 p-6 rounded-2xl text-center">
-              <AlertCircle size={36} className="mx-auto text-red-400 mb-3" />
-              <p className="font-bold text-sm mb-1">Gagal Menampilkan Pratinjau</p>
-              <p className="text-xs text-red-300/80 mb-4">{error}</p>
-              <div className="flex items-center justify-center gap-2">
+            <div className="my-auto max-w-md bg-white border border-[#DC2626] text-[#0F172A] p-6 rounded-2xl text-center shadow-lg">
+              <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle size={28} className="text-[#DC2626]" strokeWidth={1.5} />
+              </div>
+              <p className="font-bold text-base mb-2">Gagal Menampilkan Pratinjau</p>
+              <p className="text-sm text-[#64748B] mb-6">{error}</p>
+              <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={handleDownload}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2"
+                  className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition-colors shadow-sm"
                 >
-                  <Download size={14} /> Unduh File Saja
+                  <Download size={16} /> Unduh File
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold"
+                  className="px-5 py-2.5 bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] rounded-xl text-sm font-semibold transition-colors"
                 >
                   Tutup
                 </button>
@@ -392,7 +400,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
           {isPdf && !loading && !error && (
             <div 
               ref={canvasContainerRef} 
-              className="w-full flex flex-col items-center justify-center min-h-full py-2"
+              className="w-full flex flex-col items-center justify-center min-h-full"
             />
           )}
 
@@ -402,22 +410,24 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
               <img
                 src={blobUrl}
                 alt={docInfo.fileName}
-                className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl border border-slate-700"
+                className="max-h-[75vh] max-w-full object-contain rounded-xl shadow-lg border border-[#E2E8F0] bg-white"
               />
             </div>
           )}
 
           {/* Fallback for other file types */}
           {!isPdf && !isImage && !loading && !error && (
-            <div className="my-auto text-center p-8 bg-slate-900 rounded-2xl border border-slate-800">
-              <FileText size={48} className="mx-auto text-slate-500 mb-3" />
-              <p className="text-sm font-semibold text-slate-200">Pratinjau langsung tidak tersedia untuk format file ini</p>
-              <p className="text-xs text-slate-400 mt-1 mb-4">Anda dapat mengunduh berkas untuk membukanya secara lokal</p>
+            <div className="my-auto text-center p-8 bg-white rounded-2xl border border-[#E2E8F0] shadow-sm max-w-md w-full">
+              <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                <FileText size={32} className="text-[#64748B]" strokeWidth={1.5} />
+              </div>
+              <p className="text-base font-bold text-[#0F172A] mb-1">Pratinjau Tidak Tersedia</p>
+              <p className="text-sm text-[#64748B] mb-6">Format file ini belum didukung untuk dibaca langsung. Silakan unduh untuk membukanya secara lokal.</p>
               <button
                 onClick={handleDownload}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2"
+                className="px-5 py-2.5 w-full bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors shadow-sm"
               >
-                <Download size={14} /> Unduh Berkas
+                <Download size={16} strokeWidth={1.5} /> Unduh Berkas
               </button>
             </div>
           )}
@@ -425,9 +435,9 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
 
         {/* Bottom Footer Info */}
         {isPdf && !loading && !error && (
-          <div className="px-4 py-2 bg-slate-900 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between shrink-0">
-            <span>Total: <strong>{numPages}</strong> Halaman</span>
-            <span>Gunakan tombol zoom & putar di bilah atas untuk menyesuaikan tampilan</span>
+          <div className="px-5 py-3 bg-white border-t border-[#E2E8F0] text-xs font-medium text-[#64748B] flex items-center justify-between shrink-0">
+            <span>Total: <strong className="text-[#0F172A]">{numPages}</strong> Halaman</span>
+            <span>Gunakan tombol kontrol di bilah atas untuk zoom & rotasi tampilan</span>
           </div>
         )}
       </div>
