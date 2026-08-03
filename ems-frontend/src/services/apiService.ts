@@ -118,7 +118,8 @@ export const candidateService = {
   getTestResults: (id: string) => api.get(`/candidates/${id}/test-results`).then(res => res.data),
   convertToEmployee: (id: string, data: any) => api.post(`/candidates/${id}/convert-to-employee`, data).then(res => res.data),
   getDocuments: (id: string) => api.get(`/candidates/${id}/documents`).then(res => res.data),
-  downloadDocument: (candidateId: string, documentId: string) => api.get(`/candidates/${candidateId}/documents/${documentId}/download`, { responseType: 'blob' }).then(res => res.data)
+  downloadDocument: (candidateId: string, documentId: string) => api.get(`/candidates/${candidateId}/documents/${documentId}/download`, { responseType: 'blob' }).then(res => res.data),
+  viewDocument: (candidateId: string, documentId: string) => api.get(`/candidates/${candidateId}/documents/${documentId}/view`, { responseType: 'blob' }).then(res => res.data)
 };
 
 export const jobOpeningService = {

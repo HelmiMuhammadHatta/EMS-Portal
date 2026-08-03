@@ -727,7 +727,7 @@ export const CandidateDetail = () => {
         isOpen={!!previewDoc}
         onClose={() => setPreviewDoc(null)}
         document={previewDoc}
-        fetchDocumentBlob={async () => previewDoc ? candidateService.downloadDocument(candidate.id, previewDoc.id) : new Blob()}
+        fetchDocumentBlob={async () => previewDoc ? candidateService.viewDocument(candidate.id, previewDoc.id) : new Blob()}
       />
 
     </div>
