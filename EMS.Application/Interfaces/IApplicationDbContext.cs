@@ -35,7 +35,9 @@ public interface IApplicationDbContext
     DbSet<ProctoringSnapshot> ProctoringSnapshots { get; }
 
     // Recruitment Module
+    DbSet<JobOpening> JobOpenings { get; }
     DbSet<Candidate> Candidates { get; }
+    DbSet<CandidateDocument> CandidateDocuments { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

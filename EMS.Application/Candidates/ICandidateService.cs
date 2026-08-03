@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using EMS.Application.Assessments;
 
@@ -15,4 +16,11 @@ public interface ICandidateService
     Task<List<AssignedTestLinkDto>> AssignTestAsync(Guid id, AssignTestRequest request);
     Task<List<TestResultDto>> GetCandidateTestResultsAsync(Guid id);
     Task<(Guid EmployeeId, string TempPassword)> ConvertToEmployeeAsync(Guid id, ConvertToEmployeeRequest request);
+    
+    // Public career portal application
+    Task<PublicApplyResultDto> SubmitPublicApplicationAsync(PublicApplyServiceRequest request, string clientIp);
+    
+    // Documents management
+    Task<List<CandidateDocumentDto>> GetCandidateDocumentsAsync(Guid candidateId);
+    Task<(Stream FileStream, string ContentType, string FileName)> DownloadCandidateDocumentAsync(Guid candidateId, Guid documentId);
 }

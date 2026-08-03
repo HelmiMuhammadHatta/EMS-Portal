@@ -44,7 +44,9 @@ public class EmsDbContext : DbContext, IApplicationDbContext
     public DbSet<ProctoringSnapshot> ProctoringSnapshots => Set<ProctoringSnapshot>();
 
     // Recruitment Module
+    public DbSet<JobOpening> JobOpenings => Set<JobOpening>();
     public DbSet<Candidate> Candidates => Set<Candidate>();
+    public DbSet<CandidateDocument> CandidateDocuments => Set<CandidateDocument>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -226,6 +228,24 @@ public class EmsDbContext : DbContext, IApplicationDbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         // 13. Recruitment Module configurations
+        modelBuilder.Entity<JobOpening>()
+            .HasOne(j => j.Department)
+            .WithMany()
+            .HasForeignKey(j => j.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<JobOpening>()
+            .HasOne(j => j.Position)
+            .WithMany()
+            .HasForeignKey(j => j.PositionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Candidate>()
+            .HasOne(c => c.JobOpening)
+            .WithMany(j => j.Candidates)
+            .HasForeignKey(c => c.JobOpeningId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<Candidate>()
             .HasOne(c => c.AppliedDepartment)
             .WithMany()
@@ -237,6 +257,12 @@ public class EmsDbContext : DbContext, IApplicationDbContext
             .WithMany()
             .HasForeignKey(c => c.AppliedPositionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CandidateDocument>()
+            .HasOne(cd => cd.Candidate)
+            .WithMany(c => c.Documents)
+            .HasForeignKey(cd => cd.CandidateId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Employee>()
             .HasOne(e => e.Candidate)

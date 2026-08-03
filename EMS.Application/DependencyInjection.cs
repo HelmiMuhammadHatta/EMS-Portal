@@ -24,9 +24,9 @@ public static class DependencyInjection
         services.AddScoped<EMS.Application.Attendances.IShiftRotationService, EMS.Application.Attendances.ShiftRotationService>();
         services.AddScoped<EMS.Application.Assessments.IAssessmentService, EMS.Application.Assessments.AssessmentService>();
         services.AddScoped<EMS.Application.Candidates.ICandidateService, EMS.Application.Candidates.CandidateService>();
+        services.AddScoped<EMS.Application.JobOpenings.IJobOpeningService, EMS.Application.JobOpenings.JobOpeningService>();
+        services.AddSingleton<EMS.Application.Common.IPublicApplyRateLimiter, EMS.Application.Common.PublicApplyRateLimiter>();
 
-
-        
         return services;
     }
 }

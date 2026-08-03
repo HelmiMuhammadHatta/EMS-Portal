@@ -126,4 +126,32 @@ public class CandidatesController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpGet("{id}/documents")]
+    public async Task<IActionResult> GetCandidateDocuments(Guid id)
+    {
+        try
+        {
+            var docs = await _candidateService.GetCandidateDocumentsAsync(id);
+            return Ok(docs);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("{id}/documents/{documentId}/download")]
+    public async Task<IActionResult> DownloadCandidateDocument(Guid id, Guid documentId)
+    {
+        try
+        {
+            var (stream, contentType, fileName) = await _candidateService.DownloadCandidateDocumentAsync(id, documentId);
+            return File(stream, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }

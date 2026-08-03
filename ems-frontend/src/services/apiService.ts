@@ -116,7 +116,24 @@ export const candidateService = {
   updateStatus: (id: string, status: string) => api.put(`/candidates/${id}/status`, `"${status}"`, { headers: { 'Content-Type': 'application/json' } }).then(res => res.data),
   assignTest: (id: string, data: any) => api.post(`/candidates/${id}/assign-test`, data).then(res => res.data),
   getTestResults: (id: string) => api.get(`/candidates/${id}/test-results`).then(res => res.data),
-  convertToEmployee: (id: string, data: any) => api.post(`/candidates/${id}/convert-to-employee`, data).then(res => res.data)
+  convertToEmployee: (id: string, data: any) => api.post(`/candidates/${id}/convert-to-employee`, data).then(res => res.data),
+  getDocuments: (id: string) => api.get(`/candidates/${id}/documents`).then(res => res.data),
+  downloadDocument: (candidateId: string, documentId: string) => api.get(`/candidates/${candidateId}/documents/${documentId}/download`, { responseType: 'blob' }).then(res => res.data)
+};
+
+export const jobOpeningService = {
+  getAll: () => api.get('/job-openings').then(res => res.data),
+  getById: (id: string) => api.get(`/job-openings/${id}`).then(res => res.data),
+  create: (data: any) => api.post('/job-openings', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/job-openings/${id}`, data).then(res => res.data),
+  toggleStatus: (id: string) => api.put(`/job-openings/${id}/toggle-status`).then(res => res.data),
+  delete: (id: string) => api.delete(`/job-openings/${id}`).then(res => res.data)
+};
+
+export const publicService = {
+  getJobOpenings: () => api.get('/public/job-openings').then(res => res.data),
+  getJobOpeningById: (id: string) => api.get(`/public/job-openings/${id}`).then(res => res.data),
+  applyJob: (formData: FormData) => api.post('/public/apply', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(res => res.data)
 };
 
 

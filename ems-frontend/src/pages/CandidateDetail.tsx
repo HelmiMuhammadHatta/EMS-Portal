@@ -167,7 +167,16 @@ export const CandidateDetail = () => {
           {/* Profile Card */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row gap-8">
             <div className="flex-1 space-y-4">
-              <h3 className="text-lg font-semibold text-slate-800 border-b border-slate-100 pb-2">Candidate Information</h3>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 className="text-lg font-semibold text-slate-800">Candidate Information</h3>
+                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
+                  candidate.source === 'PublicForm' 
+                    ? 'bg-sky-50 text-sky-700 border-sky-200' 
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}>
+                  {candidate.source === 'PublicForm' ? '🌐 Public Career Portal' : '👤 Manual Input HR'}
+                </span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                 <div className="flex items-start gap-3">
                   <Mail className="text-slate-400 shrink-0 mt-0.5" size={18} />
@@ -189,6 +198,11 @@ export const CandidateDetail = () => {
                     <p className="text-xs font-medium text-slate-500 uppercase">Applied For</p>
                     <p className="text-slate-800 font-medium">{candidate.appliedPositionName}</p>
                     <p className="text-xs text-slate-500">{candidate.appliedDepartmentName}</p>
+                    {candidate.jobOpeningTitle && (
+                      <p className="text-[11px] text-blue-600 font-medium mt-0.5">
+                        Lowongan: {candidate.jobOpeningTitle}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -199,11 +213,86 @@ export const CandidateDetail = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Education & Experience Details if present */}
+              {(candidate.education || candidate.workExperience) && (
+                <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {candidate.education && (
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                      <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Pendidikan Terakhir</p>
+                      <p className="text-xs text-slate-800 whitespace-pre-wrap">{candidate.education}</p>
+                    </div>
+                  )}
+                  {candidate.workExperience && (
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                      <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Pengalaman Kerja</p>
+                      <p className="text-xs text-slate-800 whitespace-pre-wrap">{candidate.workExperience}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="w-full md:w-1/3 bg-slate-50 rounded-lg p-4 border border-slate-100">
               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">HR Notes</h4>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{candidate.notes || 'No notes added.'}</p>
+            </div>
+          </div>
+
+          {/* Uploaded Documents Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <FileText size={20} className="text-blue-500"/>
+                Dokumen Berkas Lamaran ({candidate.documents?.length || 0})
+              </h3>
+            </div>
+            <div className="p-6">
+              {(!candidate.documents || candidate.documents.length === 0) ? (
+                <p className="text-xs text-slate-500 italic">Tidak ada berkas dokumen yang diunggah.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {candidate.documents.map((doc: any) => (
+                    <div key={doc.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                          <FileText size={20} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 mb-1 border border-blue-100">
+                            {doc.documentType}
+                          </span>
+                          <p className="text-xs font-semibold text-slate-800 truncate" title={doc.fileName}>{doc.fileName}</p>
+                          <p className="text-[11px] text-slate-500">
+                            {(doc.fileSize / 1024).toFixed(1)} KB · {format(new Date(doc.uploadedAt), 'd MMM yyyy')}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={async () => {
+                          try {
+                            const blob = await candidateService.downloadDocument(candidate.id, doc.id);
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = doc.fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
+                          } catch (err: any) {
+                            toast.error('Gagal mengunduh dokumen.');
+                          }
+                        }}
+                        className="w-full py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <FileText size={14} /> Unduh Berkas
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

@@ -18,6 +18,8 @@ import { TakeTest } from './pages/TakeTest';
 import { TestResult } from './pages/TestResult';
 import { CandidateList } from './pages/CandidateList';
 import { CandidateDetail } from './pages/CandidateDetail';
+import { Careers } from './pages/Careers';
+import { CareerApply } from './pages/CareerApply';
 
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/careers/apply/:jobOpeningId" element={<CareerApply />} />
           <Route path="/take-test/:testId/:sessionId" element={<TakeTest />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Dashboard />} />

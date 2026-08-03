@@ -707,6 +707,59 @@ public static class DataSeeder
             context.Tests.Add(personalityTest);
         }
 
+        // 7. Seed Sample Job Openings
+        if (!await context.JobOpenings.AnyAsync())
+        {
+            var itDept = await context.Departments.FirstOrDefaultAsync(d => d.Name.Contains("IT") || d.Name.Contains("Technology") || d.Name.Contains("Software"));
+            var hrDept = await context.Departments.FirstOrDefaultAsync(d => d.Name.Contains("HR") || d.Name.Contains("Human"));
+            var anyDept = itDept ?? hrDept ?? await context.Departments.FirstOrDefaultAsync();
+
+            var devPos = await context.Positions.FirstOrDefaultAsync(p => p.Name.Contains("Developer") || p.Name.Contains("Engineer") || p.Name.Contains("Staff"));
+            var hrPos = await context.Positions.FirstOrDefaultAsync(p => p.Name.Contains("HR") || p.Name.Contains("Specialist") || p.Name.Contains("Staff"));
+            var anyPos = devPos ?? hrPos ?? await context.Positions.FirstOrDefaultAsync();
+
+            if (anyDept != null && anyPos != null)
+            {
+                var job1 = new JobOpening
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "Senior Full-Stack Developer",
+                    DepartmentId = itDept?.Id ?? anyDept.Id,
+                    PositionId = devPos?.Id ?? anyPos.Id,
+                    Description = "Kami mencari Full-Stack Developer berpengalaman untuk merancang, membangun, dan memelihara aplikasi web skala enterprise EMS Portal menggunakan React, TypeScript, dan .NET Core Web API.",
+                    Requirements = "- Minimal 3 tahun pengalaman dengan React/Vue dan C# / .NET Core\n- Menguasai PostgreSQL / SQL Server dan RESTful API\n- Terbiasa dengan arsitektur Clean Architecture & CQRS\n- Mampu bekerja dalam tim dengan metodologi Agile / Scrum\n- Memiliki komunikasi yang baik dan problem solving yang kuat",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var job2 = new JobOpening
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "Human Resources Specialist",
+                    DepartmentId = hrDept?.Id ?? anyDept.Id,
+                    PositionId = hrPos?.Id ?? anyPos.Id,
+                    Description = "Bertanggung jawab atas proses rekrutmen end-to-end, onboarding karyawan baru, administrasi data kepegawaian, evaluasi kinerja, dan engagement karyawan.",
+                    Requirements = "- Pendidikan minimal S1 Psikologi, Manajemen SDM, atau jurusan terkait\n- Minimal 2 tahun pengalaman di bidang Recruitment & HR Generalist\n- Menguasai administrasi alat tes psikologi dan teknik wawancara berbasis kompetensi (BEI)\n- Memahami regulasi ketenagakerjaan di Indonesia\n- Teliti, komunikatif, dan memiliki empati tinggi",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var job3 = new JobOpening
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "UI/UX Designer & Product Researcher",
+                    DepartmentId = itDept?.Id ?? anyDept.Id,
+                    PositionId = devPos?.Id ?? anyPos.Id,
+                    Description = "Mendesain antarmuka pengguna yang modern, intuitif, dan responsif untuk seluruh modul ekosistem EMS Portal, serta melakukan riset pengguna.",
+                    Requirements = "- Portofolio desain UI/UX web dan mobile app yang kuat\n- Mahir menggunakan Figma, Auto Layout, dan Design System\n- Memahami prinsip-prinsip heuristik UX dan accessibility (WCAG)\n- Mampu berkolaborasi erat dengan Software Engineer",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.JobOpenings.AddRange(job1, job2, job3);
+            }
+        }
+
         await context.SaveChangesAsync();
     }
 }
