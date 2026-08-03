@@ -14,6 +14,11 @@ import { DailyReportList } from './pages/DailyReportList';
 import { Settings } from './pages/Settings';
 import { EmployeeDetail } from './pages/EmployeeDetail';
 import { ShiftSchedules } from './pages/ShiftSchedules';
+import { TakeTest } from './pages/TakeTest';
+import { TestResult } from './pages/TestResult';
+import { CandidateList } from './pages/CandidateList';
+import { CandidateDetail } from './pages/CandidateDetail';
+
 
 const queryClient = new QueryClient();
 
@@ -23,6 +28,7 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/take-test/:testId/:sessionId" element={<TakeTest />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/employees" element={<EmployeeList />} />
@@ -32,7 +38,26 @@ export function App() {
             <Route path="/shift-schedules" element={<ShiftSchedules />} />
             <Route path="/daily-reports" element={<DailyReportList />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/test-results/:sessionId" element={<TestResult />} />
+            <Route path="/assessments" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Manager', 'HR']}>
+                <div className="p-8 text-center text-slate-500">Assessments management coming soon</div>
+              </ProtectedRoute>
+            } />
+            
+            {/* Recruitment Module */}
+            <Route path="/candidates" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Manager', 'HR']}>
+                <CandidateList />
+              </ProtectedRoute>
+            } />
+            <Route path="/candidates/:id" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Manager', 'HR']}>
+                <CandidateDetail />
+              </ProtectedRoute>
+            } />
           </Route>
+
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors />

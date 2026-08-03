@@ -3,6 +3,7 @@ using System;
 using EMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EMS.Infrastructure.Migrations
 {
     [DbContext(typeof(EmsDbContext))]
-    partial class EmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260803120344_AddAssessmentModule")]
+    partial class AddAssessmentModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -106,51 +109,6 @@ namespace EMS.Infrastructure.Migrations
                     b.ToTable("AuditLogs");
                 });
 
-            modelBuilder.Entity("EMS.Domain.Entities.Candidate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<Guid>("AppliedDepartmentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AppliedPositionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppliedDepartmentId");
-
-                    b.HasIndex("AppliedPositionId");
-
-                    b.ToTable("Candidates");
-                });
-
             modelBuilder.Entity("EMS.Domain.Entities.DailyReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -225,9 +183,6 @@ namespace EMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<Guid?>("CandidateId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -269,9 +224,6 @@ namespace EMS.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CandidateId")
-                        .IsUnique();
 
                     b.HasIndex("DefaultShiftId");
 
@@ -486,30 +438,6 @@ namespace EMS.Infrastructure.Migrations
                     b.ToTable("Positions");
                 });
 
-            modelBuilder.Entity("EMS.Domain.Entities.ProctoringSnapshot", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateTime>("CapturedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TestSessionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TestSessionId");
-
-                    b.ToTable("ProctoringSnapshots");
-                });
-
             modelBuilder.Entity("EMS.Domain.Entities.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -687,9 +615,6 @@ namespace EMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<int?>("Category")
-                        .HasColumnType("integer");
-
                     b.Property<int>("QuestionOrder")
                         .HasColumnType("integer");
 
@@ -753,12 +678,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Property<int>("DurationSeconds")
                         .HasColumnType("integer");
 
-                    b.Property<double?>("LogicScorePercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<double?>("NumericScorePercentage")
-                        .HasColumnType("double precision");
-
                     b.Property<int>("ScoreC")
                         .HasColumnType("integer");
 
@@ -774,9 +693,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Property<int>("ScoreS")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TabSwitchCount")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("TestSessionId")
                         .HasColumnType("uuid");
 
@@ -785,9 +701,6 @@ namespace EMS.Infrastructure.Migrations
 
                     b.Property<int>("TotalQuestions")
                         .HasColumnType("integer");
-
-                    b.Property<double?>("VerbalScorePercentage")
-                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -804,25 +717,13 @@ namespace EMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<string>("AccessCode")
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("FailedAccessAttempts")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LockedUntil")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TabSwitchCount")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("TakenById")
@@ -950,25 +851,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Navigation("ChangedByUser");
                 });
 
-            modelBuilder.Entity("EMS.Domain.Entities.Candidate", b =>
-                {
-                    b.HasOne("EMS.Domain.Entities.Department", "AppliedDepartment")
-                        .WithMany()
-                        .HasForeignKey("AppliedDepartmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EMS.Domain.Entities.Position", "AppliedPosition")
-                        .WithMany()
-                        .HasForeignKey("AppliedPositionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AppliedDepartment");
-
-                    b.Navigation("AppliedPosition");
-                });
-
             modelBuilder.Entity("EMS.Domain.Entities.DailyReport", b =>
                 {
                     b.HasOne("EMS.Domain.Entities.Employee", "Employee")
@@ -989,11 +871,6 @@ namespace EMS.Infrastructure.Migrations
 
             modelBuilder.Entity("EMS.Domain.Entities.Employee", b =>
                 {
-                    b.HasOne("EMS.Domain.Entities.Candidate", "Candidate")
-                        .WithOne()
-                        .HasForeignKey("EMS.Domain.Entities.Employee", "CandidateId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("EMS.Domain.Entities.WorkShift", "DefaultShift")
                         .WithMany()
                         .HasForeignKey("DefaultShiftId")
@@ -1026,8 +903,6 @@ namespace EMS.Infrastructure.Migrations
                         .HasForeignKey("EMS.Domain.Entities.Employee", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Candidate");
 
                     b.Navigation("DefaultShift");
 
@@ -1106,17 +981,6 @@ namespace EMS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Department");
-                });
-
-            modelBuilder.Entity("EMS.Domain.Entities.ProctoringSnapshot", b =>
-                {
-                    b.HasOne("EMS.Domain.Entities.TestSession", "TestSession")
-                        .WithMany("ProctoringSnapshots")
-                        .HasForeignKey("TestSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TestSession");
                 });
 
             modelBuilder.Entity("EMS.Domain.Entities.RolePermission", b =>
@@ -1322,8 +1186,6 @@ namespace EMS.Infrastructure.Migrations
             modelBuilder.Entity("EMS.Domain.Entities.TestSession", b =>
                 {
                     b.Navigation("Answers");
-
-                    b.Navigation("ProctoringSnapshots");
 
                     b.Navigation("Result");
                 });

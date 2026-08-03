@@ -303,6 +303,16 @@ public static class DataSeeder
             }
         }
         await context.SaveChangesAsync();
+        
+        // Pindahkan sisa candidate ke posisi default per departemennya
+        var candidates = await context.Candidates.ToListAsync();
+        foreach (var cand in candidates)
+        {
+            var defaultPos = newlyCreatedPositions.FirstOrDefault(p => p.DepartmentId == cand.AppliedDepartmentId) 
+                             ?? exec1;
+            cand.AppliedPositionId = defaultPos.Id;
+        }
+        await context.SaveChangesAsync();
 
         // SEKARANG kita bisa hapus posisi lama karena semua foreign key sudah diganti ke posisi baru
         context.Positions.RemoveRange(allOldPositions);
@@ -514,5 +524,190 @@ public static class DataSeeder
             }
         }
         await context.SaveChangesAsync();
+
+        // 10. Seed Assessment Tests
+        var logicQuestionsData = new List<(string text, QuestionCategory category, string[] options, int correctIdx)>
+        {
+            // Verbal (Sinonim, Antonim, Analogi)
+            ("PANDAI >< ...", QuestionCategory.Verbal, new[] { "Pintar", "Bodoh", "Cerdik", "Jenius" }, 1),
+            ("BURUNG : TERBANG = IKAN : ...", QuestionCategory.Verbal, new[] { "Insang", "Berenang", "Air", "Sirip" }, 1),
+            ("SINONIM dari kata 'MANDIRI' adalah...", QuestionCategory.Verbal, new[] { "Bergantung", "Berdikari", "Bersama", "Bekerja" }, 1),
+            ("KENDARAAN : RODA = KAPAL : ...", QuestionCategory.Verbal, new[] { "Laut", "Nahkoda", "Baling-baling", "Jangkar" }, 2),
+            ("ANTONIM dari kata 'PROAKTIF' adalah...", QuestionCategory.Verbal, new[] { "Reaktif", "Kreatif", "Pasif", "Aktif" }, 2),
+            ("APOTEKER : OBAT = KOKI : ...", QuestionCategory.Verbal, new[] { "Restoran", "Dapur", "Masakan", "Pisau" }, 2),
+            
+            // Numeric (Deret angka, Aritmatika, Perbandingan)
+            ("2, 4, 8, 16, ... angka selanjutnya?", QuestionCategory.Numeric, new[] { "24", "30", "32", "64" }, 2),
+            ("Jika harga 5 kg apel adalah Rp 100.000, berapa harga 2 kg apel?", QuestionCategory.Numeric, new[] { "Rp 20.000", "Rp 40.000", "Rp 50.000", "Rp 60.000" }, 1),
+            ("10, 15, 21, 28, ... angka selanjutnya?", QuestionCategory.Numeric, new[] { "35", "36", "37", "38" }, 1),
+            ("Sebuah kereta melaju dengan kecepatan 60 km/jam. Jarak yang ditempuh dalam 2,5 jam adalah...", QuestionCategory.Numeric, new[] { "120 km", "150 km", "160 km", "180 km" }, 1),
+            ("1/2 + 1/4 = ...", QuestionCategory.Numeric, new[] { "3/4", "1/6", "2/4", "2/6" }, 0),
+            ("Jika 4 orang pekerja dapat menyelesaikan sebuah pekerjaan dalam 15 hari, berapa hari yang dibutuhkan jika dikerjakan oleh 6 orang pekerja?", QuestionCategory.Numeric, new[] { "8 hari", "10 hari", "12 hari", "14 hari" }, 1),
+            
+            // Logic (Penalaran, Silogisme, Urutan)
+            ("Semua karyawan mendapat cuti. Budi adalah karyawan. Maka...", QuestionCategory.Logic, new[] { "Budi tidak mendapat cuti", "Budi mungkin mendapat cuti", "Budi mendapat cuti", "Budi bukan karyawan" }, 2),
+            ("Sebagian mawar berwarna merah. Semua bunga mawar memiliki duri. Maka...", QuestionCategory.Logic, new[] { "Semua mawar berduri merah", "Sebagian mawar berwarna merah dan berduri", "Mawar yang merah tidak berduri", "Semua bunga berduri adalah mawar" }, 1),
+            ("Jika turun hujan, maka jalanan basah. Saat ini jalanan tidak basah. Kesimpulannya...", QuestionCategory.Logic, new[] { "Hari ini hujan", "Hari ini tidak hujan", "Jalanan kering karena panas", "Tidak bisa disimpulkan" }, 1),
+            ("Andi lebih tinggi dari Budi. Cici lebih pendek dari Budi. Siapa yang paling tinggi?", QuestionCategory.Logic, new[] { "Andi", "Budi", "Cici", "Semua sama tinggi" }, 0),
+            ("Tidak ada benda cair yang padat. Es adalah benda padat. Kesimpulannya...", QuestionCategory.Logic, new[] { "Es adalah benda cair", "Es bukan benda cair", "Sebagian es cair", "Air adalah es" }, 1),
+            ("Dalam antrian, Dita berada di depan Eko tetapi di belakang Caca. Jika Budi di depan Caca, siapakah yang berada di antrian paling depan?", QuestionCategory.Logic, new[] { "Budi", "Caca", "Dita", "Eko" }, 0)
+        };
+
+        var existingLogicTest = await context.Tests.Include(t => t.Questions).ThenInclude(q => q.Options).FirstOrDefaultAsync(t => t.Type == TestType.Logic);
+        if (existingLogicTest == null)
+        {
+            var logicTestId = Guid.NewGuid();
+            var logicTest = new Test
+            {
+                Id = logicTestId,
+                Name = "Tes Logika Dasar",
+                Description = "Tes logika dan kemampuan analitis dasar (Verbal, Numerik, dan Logika Penalaran).",
+                Type = TestType.Logic,
+                DurationMinutes = 30,
+                IsActive = true
+            };
+
+            var logicQuestions = new List<TestQuestion>();
+            for (int i = 0; i < logicQuestionsData.Count; i++)
+            {
+                var qId = Guid.NewGuid();
+                var q = new TestQuestion
+                {
+                    Id = qId,
+                    TestId = logicTestId,
+                    QuestionText = logicQuestionsData[i].text,
+                    QuestionOrder = i + 1,
+                    Category = logicQuestionsData[i].category
+                };
+                
+                var options = new List<TestQuestionOption>();
+                for (int j = 0; j < 4; j++)
+                {
+                    options.Add(new TestQuestionOption
+                    {
+                        Id = Guid.NewGuid(),
+                        TestQuestionId = qId,
+                        OptionText = logicQuestionsData[i].options[j],
+                        OptionOrder = j + 1,
+                        IsCorrect = (j == logicQuestionsData[i].correctIdx),
+                        TraitCategory = TraitCategory.None
+                    });
+                }
+                q.Options = options;
+                logicQuestions.Add(q);
+            }
+            logicTest.Questions = logicQuestions;
+            context.Tests.Add(logicTest);
+        }
+        else if (existingLogicTest.Questions.Count < logicQuestionsData.Count)
+        {
+            var orderedExisting = existingLogicTest.Questions.OrderBy(q => q.QuestionOrder).ToList();
+            
+            for (int i = 0; i < logicQuestionsData.Count; i++)
+            {
+                var data = logicQuestionsData[i];
+                if (i < orderedExisting.Count)
+                {
+                    // Update existing question in-place
+                    var eq = orderedExisting[i];
+                    eq.QuestionText = data.text;
+                    eq.QuestionOrder = i + 1;
+                    eq.Category = data.category;
+
+                    var orderedOptions = eq.Options.OrderBy(o => o.OptionOrder).ToList();
+                    for (int j = 0; j < 4; j++)
+                    {
+                        if (j < orderedOptions.Count)
+                        {
+                            orderedOptions[j].OptionText = data.options[j];
+                            orderedOptions[j].OptionOrder = j + 1;
+                            orderedOptions[j].IsCorrect = (j == data.correctIdx);
+                        }
+                        else
+                        {
+                            eq.Options.Add(new TestQuestionOption
+                            {
+                                Id = Guid.NewGuid(),
+                                TestQuestionId = eq.Id,
+                                OptionText = data.options[j],
+                                OptionOrder = j + 1,
+                                IsCorrect = (j == data.correctIdx),
+                                TraitCategory = TraitCategory.None
+                            });
+                        }
+                    }
+                }
+                else
+                {
+                    // Add new question
+                    var qId = Guid.NewGuid();
+                    var q = new TestQuestion
+                    {
+                        Id = qId,
+                        TestId = existingLogicTest.Id,
+                        QuestionText = data.text,
+                        QuestionOrder = i + 1,
+                        Category = data.category
+                    };
+                    
+                    var options = new List<TestQuestionOption>();
+                    for (int j = 0; j < 4; j++)
+                    {
+                        options.Add(new TestQuestionOption
+                        {
+                            Id = Guid.NewGuid(),
+                            TestQuestionId = qId,
+                            OptionText = data.options[j],
+                            OptionOrder = j + 1,
+                            IsCorrect = (j == data.correctIdx),
+                            TraitCategory = TraitCategory.None
+                        });
+                    }
+                    q.Options = options;
+                    context.TestQuestions.Add(q);
+                }
+            }
+        }
+
+        if (!await context.Tests.AnyAsync(t => t.Type == TestType.Personality))
+        {
+            var personalityTestId = Guid.NewGuid();
+            var personalityTest = new Test
+            {
+                Id = personalityTestId,
+                Name = "Tes Kepribadian DISC",
+                Description = "Tes kepribadian untuk mengetahui profil Dominance, Influence, Steadiness, dan Conscientiousness.",
+                Type = TestType.Personality,
+                DurationMinutes = 20,
+                IsActive = true
+            };
+
+            var personalityQuestions = new List<TestQuestion>();
+            for (int i = 1; i <= 15; i++)
+            {
+                var qId = Guid.NewGuid();
+                var q = new TestQuestion
+                {
+                    Id = qId,
+                    TestId = personalityTestId,
+                    QuestionText = $"Pertanyaan Kepribadian {i}: Manakah pernyataan yang paling menggambarkan diri Anda?",
+                    QuestionOrder = i
+                };
+
+                q.Options = new List<TestQuestionOption>
+                {
+                    new TestQuestionOption { Id = Guid.NewGuid(), TestQuestionId = qId, OptionText = "Saya suka memegang kendali dan mengambil keputusan (Dominance)", OptionOrder = 1, TraitCategory = TraitCategory.D },
+                    new TestQuestionOption { Id = Guid.NewGuid(), TestQuestionId = qId, OptionText = "Saya suka bergaul dan mempengaruhi orang lain (Influence)", OptionOrder = 2, TraitCategory = TraitCategory.I },
+                    new TestQuestionOption { Id = Guid.NewGuid(), TestQuestionId = qId, OptionText = "Saya sabar, pendengar yang baik, dan konsisten (Steadiness)", OptionOrder = 3, TraitCategory = TraitCategory.S },
+                    new TestQuestionOption { Id = Guid.NewGuid(), TestQuestionId = qId, OptionText = "Saya teliti, analitis, dan berhati-hati (Conscientiousness)", OptionOrder = 4, TraitCategory = TraitCategory.C }
+                };
+                personalityQuestions.Add(q);
+            }
+            personalityTest.Questions = personalityQuestions;
+            context.Tests.Add(personalityTest);
+        }
+
+        await context.SaveChangesAsync();
     }
 }
+

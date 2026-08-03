@@ -22,6 +22,10 @@ public class Employee
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    public Guid? CandidateId { get; set; }
+    public Candidate? Candidate { get; set; }
+
+    
     public Guid? DefaultShiftId { get; set; }
     public WorkShift? DefaultShift { get; set; }
     

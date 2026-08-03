@@ -1,0 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using EMS.Application.Assessments;
+
+namespace EMS.Application.Candidates;
+
+public interface ICandidateService
+{
+    Task<List<CandidateDto>> GetCandidatesAsync();
+    Task<CandidateDto> GetCandidateByIdAsync(Guid id);
+    Task<CandidateDto> CreateCandidateAsync(CreateCandidateRequest request);
+    Task UpdateCandidateAsync(Guid id, UpdateCandidateRequest request);
+    Task UpdateCandidateStatusAsync(Guid id, string status);
+    Task<List<AssignedTestLinkDto>> AssignTestAsync(Guid id, AssignTestRequest request);
+    Task<List<TestResultDto>> GetCandidateTestResultsAsync(Guid id);
+    Task<(Guid EmployeeId, string TempPassword)> ConvertToEmployeeAsync(Guid id, ConvertToEmployeeRequest request);
+}

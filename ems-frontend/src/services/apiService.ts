@@ -94,3 +94,29 @@ export const shiftRotationService = {
   updatePattern: (groupId: string, patternId: string, data: any) => api.put(`/shift-rotation-groups/${groupId}/patterns/${patternId}`, data).then(res => res.data),
   deletePattern: (groupId: string, patternId: string) => api.delete(`/shift-rotation-groups/${groupId}/patterns/${patternId}`).then(res => res.data)
 };
+
+export const assessmentService = {
+  getTests: (type?: number) => api.get('/assessments/tests', { params: type !== undefined ? { type } : {} }).then(res => res.data),
+  getTestQuestions: (id: string) => api.get(`/assessments/tests/${id}/questions`).then(res => res.data),
+  startSession: (data: any) => api.post('/assessments/sessions', data).then(res => res.data),
+  getSession: (sessionId: string) => api.get(`/assessments/sessions/${sessionId}`).then(res => res.data),
+  verifyAccessCode: (sessionId: string, accessCode: string) => api.post(`/assessments/sessions/${sessionId}/verify-access`, { accessCode }).then(res => res.data),
+  uploadSnapshot: (sessionId: string, base64Image: string) => api.post(`/assessments/sessions/${sessionId}/proctoring-snapshot`, { base64Image }).then(res => res.data),
+  recordTabSwitch: (sessionId: string, tabSwitchCount: number) => api.post(`/assessments/sessions/${sessionId}/tab-switch`, { tabSwitchCount }).then(res => res.data),
+  submitAnswer: (sessionId: string, data: any) => api.post(`/assessments/sessions/${sessionId}/answers`, data).then(res => res.data),
+  submitSession: (sessionId: string) => api.post(`/assessments/sessions/${sessionId}/submit`).then(res => res.data),
+  getTestResult: (sessionId: string) => api.get(`/assessments/sessions/${sessionId}/result`).then(res => res.data)
+};
+
+export const candidateService = {
+  getAll: () => api.get('/candidates').then(res => res.data),
+  getById: (id: string) => api.get(`/candidates/${id}`).then(res => res.data),
+  create: (data: any) => api.post('/candidates', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/candidates/${id}`, data).then(res => res.data),
+  updateStatus: (id: string, status: string) => api.put(`/candidates/${id}/status`, `"${status}"`, { headers: { 'Content-Type': 'application/json' } }).then(res => res.data),
+  assignTest: (id: string, data: any) => api.post(`/candidates/${id}/assign-test`, data).then(res => res.data),
+  getTestResults: (id: string) => api.get(`/candidates/${id}/test-results`).then(res => res.data),
+  convertToEmployee: (id: string, data: any) => api.post(`/candidates/${id}/convert-to-employee`, data).then(res => res.data)
+};
+
+

@@ -31,3 +31,7 @@ logs/
 # Environment variables
 .env
 .env.local
+
+# Uploads & Build cache
+EMS.API/wwwroot/uploads/
+*.tsbuildinfo

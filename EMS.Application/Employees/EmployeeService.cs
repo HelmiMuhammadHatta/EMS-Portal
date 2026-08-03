@@ -237,10 +237,12 @@ public class EmployeeService : IEmployeeService
             HireDate = request.HireDate.ToUniversalTime(),
             DefaultShiftId = request.DefaultShiftId,
             RotationGroupId = request.RotationGroupId,
+            CandidateId = request.CandidateId,
             Status = EmployeeStatus.Active,
             IsDeleted = false,
             CreatedAt = DateTime.UtcNow
         };
+
 
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();

@@ -3,6 +3,7 @@ using System;
 using EMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EMS.Infrastructure.Migrations
 {
     [DbContext(typeof(EmsDbContext))]
-    partial class EmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260803144543_EnhanceAssessmentModule")]
+    partial class EnhanceAssessmentModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -774,9 +777,6 @@ namespace EMS.Infrastructure.Migrations
                     b.Property<int>("ScoreS")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TabSwitchCount")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("TestSessionId")
                         .HasColumnType("uuid");
 
@@ -820,9 +820,6 @@ namespace EMS.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TabSwitchCount")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("TakenById")

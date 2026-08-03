@@ -64,7 +64,9 @@ public class CreateEmployeeRequest
     public DateTime HireDate { get; set; }
     public Guid? DefaultShiftId { get; set; }
     public Guid? RotationGroupId { get; set; }
+    public Guid? CandidateId { get; set; }
 }
+
 
 public class UpdateEmployeeRequest
 {

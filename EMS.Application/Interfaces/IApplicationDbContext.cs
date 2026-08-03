@@ -25,5 +25,17 @@ public interface IApplicationDbContext
     DbSet<ShiftRotationGroup> ShiftRotationGroups { get; }
     DbSet<ShiftRotationPattern> ShiftRotationPatterns { get; }
 
+    // Assessment Module
+    DbSet<Test> Tests { get; }
+    DbSet<TestQuestion> TestQuestions { get; }
+    DbSet<TestQuestionOption> TestQuestionOptions { get; }
+    DbSet<TestSession> TestSessions { get; }
+    DbSet<TestAnswer> TestAnswers { get; }
+    DbSet<TestResult> TestResults { get; }
+    DbSet<ProctoringSnapshot> ProctoringSnapshots { get; }
+
+    // Recruitment Module
+    DbSet<Candidate> Candidates { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

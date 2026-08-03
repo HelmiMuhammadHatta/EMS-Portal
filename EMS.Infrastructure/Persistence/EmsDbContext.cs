@@ -34,6 +34,18 @@ public class EmsDbContext : DbContext, IApplicationDbContext
     public DbSet<ShiftRotationGroup> ShiftRotationGroups => Set<ShiftRotationGroup>();
     public DbSet<ShiftRotationPattern> ShiftRotationPatterns => Set<ShiftRotationPattern>();
     
+    // Assessment Module
+    public DbSet<Test> Tests => Set<Test>();
+    public DbSet<TestQuestion> TestQuestions => Set<TestQuestion>();
+    public DbSet<TestQuestionOption> TestQuestionOptions => Set<TestQuestionOption>();
+    public DbSet<TestSession> TestSessions => Set<TestSession>();
+    public DbSet<TestAnswer> TestAnswers => Set<TestAnswer>();
+    public DbSet<TestResult> TestResults => Set<TestResult>();
+    public DbSet<ProctoringSnapshot> ProctoringSnapshots => Set<ProctoringSnapshot>();
+
+    // Recruitment Module
+    public DbSet<Candidate> Candidates => Set<Candidate>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -163,6 +175,74 @@ public class EmsDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<ShiftRotationPattern>()
             .HasIndex(srp => new { srp.RotationGroupId, srp.CycleWeekNumber })
             .IsUnique();
+
+        // 12. Assessment Module configurations
+        modelBuilder.Entity<TestQuestion>()
+            .HasOne(tq => tq.Test)
+            .WithMany(t => t.Questions)
+            .HasForeignKey(tq => tq.TestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TestQuestionOption>()
+            .HasOne(tqo => tqo.TestQuestion)
+            .WithMany(tq => tq.Options)
+            .HasForeignKey(tqo => tqo.TestQuestionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TestSession>()
+            .HasOne(ts => ts.Test)
+            .WithMany()
+            .HasForeignKey(ts => ts.TestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TestAnswer>()
+            .HasOne(ta => ta.TestSession)
+            .WithMany(ts => ts.Answers)
+            .HasForeignKey(ta => ta.TestSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TestAnswer>()
+            .HasOne(ta => ta.TestQuestion)
+            .WithMany()
+            .HasForeignKey(ta => ta.TestQuestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TestAnswer>()
+            .HasOne(ta => ta.SelectedOption)
+            .WithMany()
+            .HasForeignKey(ta => ta.SelectedOptionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TestResult>()
+            .HasOne(tr => tr.TestSession)
+            .WithOne(ts => ts.Result)
+            .HasForeignKey<TestResult>(tr => tr.TestSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProctoringSnapshot>()
+            .HasOne(p => p.TestSession)
+            .WithMany(ts => ts.ProctoringSnapshots)
+            .HasForeignKey(p => p.TestSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // 13. Recruitment Module configurations
+        modelBuilder.Entity<Candidate>()
+            .HasOne(c => c.AppliedDepartment)
+            .WithMany()
+            .HasForeignKey(c => c.AppliedDepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Candidate>()
+            .HasOne(c => c.AppliedPosition)
+            .WithMany()
+            .HasForeignKey(c => c.AppliedPositionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Employee>()
+            .HasOne(e => e.Candidate)
+            .WithOne()
+            .HasForeignKey<Employee>(e => e.CandidateId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
