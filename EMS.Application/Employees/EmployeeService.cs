@@ -180,6 +180,9 @@ public class EmployeeService : IEmployeeService
                 Id = d.Id,
                 DocumentType = d.DocumentType.ToString(),
                 FilePath = d.FilePath,
+                FileName = d.FileName,
+                FileSize = d.FileSize,
+                UploadedBy = d.UploadedBy,
                 UploadedAt = d.UploadedAt
             })
         };
@@ -415,6 +418,9 @@ public class EmployeeService : IEmployeeService
             EmployeeId = employeeId,
             DocumentType = Enum.Parse<DocumentType>(documentType, true),
             FilePath = $"/uploads/employees/{employeeId}/{newFileName}",
+            FileName = fileName,
+            FileSize = fileStream.Length,
+            UploadedBy = requesterUserId,
             UploadedAt = DateTime.UtcNow
         };
 
@@ -434,6 +440,9 @@ public class EmployeeService : IEmployeeService
             Id = d.Id,
             DocumentType = d.DocumentType.ToString(),
             FilePath = d.FilePath,
+            FileName = d.FileName,
+            FileSize = d.FileSize,
+            UploadedBy = d.UploadedBy,
             UploadedAt = d.UploadedAt
         });
     }
@@ -477,13 +486,21 @@ public class EmployeeService : IEmployeeService
         var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
         var filePath = Path.Combine(uploadDir, doc.FilePath.TrimStart('/'));
 
-        if (File.Exists(filePath))
+        try
         {
-            File.Delete(filePath);
-        }
+            _context.EmployeeDocuments.Remove(doc);
+            await _context.SaveChangesAsync();
 
-        _context.EmployeeDocuments.Remove(doc);
-        await _context.SaveChangesAsync();
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete document.");
+            throw new Exception("Failed to delete document.");
+        }
     }
 
     public async Task<object> GetAuditLogsAsync(Guid employeeId, int page, int pageSize, Guid requesterUserId, bool isRequesterAdmin)

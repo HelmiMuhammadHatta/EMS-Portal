@@ -129,7 +129,12 @@ public class EmployeesController : ControllerBase
     public async Task<IActionResult> ViewDocument(Guid id, Guid documentId)
     {
         var (stream, contentType, fileName) = await _employeeService.DownloadDocumentAsync(id, documentId, GetRequesterId(), IsRequesterAdmin());
-        Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+        var cd = new System.Net.Mime.ContentDisposition
+        {
+            FileName = fileName,
+            Inline = true
+        };
+        Response.Headers.Append("Content-Disposition", cd.ToString());
         return File(stream, contentType);
     }
 

@@ -11,7 +11,6 @@ namespace EMS.API.Controllers.v1;
 [ApiController]
 [Route("api/v1/candidates")]
 [Authorize] // HR/Admin only
-[EnableCors("AllowViteDevServer")]
 public class CandidatesController : ControllerBase
 {
     private readonly ICandidateService _candidateService;
@@ -164,7 +163,12 @@ public class CandidatesController : ControllerBase
         try
         {
             var (stream, contentType, fileName) = await _candidateService.DownloadCandidateDocumentAsync(id, documentId);
-            Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+            var cd = new System.Net.Mime.ContentDisposition
+            {
+                FileName = fileName,
+                Inline = true
+            };
+            Response.Headers.Append("Content-Disposition", cd.ToString());
             return File(stream, contentType);
         }
         catch (Exception ex)
@@ -173,3 +177,4 @@ public class CandidatesController : ControllerBase
         }
     }
 }
+
