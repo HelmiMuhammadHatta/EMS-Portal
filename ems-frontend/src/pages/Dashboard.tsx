@@ -3,12 +3,14 @@ import { useAuth } from '../hooks/useAuth';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts';
 import { employeeService, leaveService, attendanceService, dailyReportService } from '../services/apiService';
 import { useMemo } from 'react';
-import { Users, CalendarClock, Activity, FileText } from 'lucide-react';
+import { Users, CalendarClock, Activity, FileText, ArrowUpRight, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import styles from './Dashboard.module.css';
 
 export const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
-  // Greeting based on time
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour >= 11 && hour < 15) return 'siang';
@@ -112,168 +114,190 @@ export const Dashboard = () => {
     });
 
     const attendanceDistribution = [
-      { name: 'On Time', value: onTimeCount, color: '#16a34a' }, // Tailwind green-600 #16a34a
-      { name: 'Late', value: lateCount, color: '#ca8a04' } // Tailwind yellow-600 #ca8a04
+      { name: 'Tepat Waktu', value: onTimeCount, color: 'var(--ds-accent-600)' },
+      { name: 'Terlambat', value: lateCount, color: 'var(--ds-pending-600)' }
     ].filter(d => d.value > 0);
 
     return { totalEmployees, pendingLeaves, attendanceRate, todayReports, chartData, leaveTrend, attendanceDistribution };
   }, [employeesData, leavesData, attendancesData, dailyReportsData]);
 
+  const Sparkline = ({ color }: { color: string }) => (
+    <svg className={styles.kpiSparkline} viewBox="0 0 60 24" fill="none">
+      <path d="M0 24 Q 10 10, 20 18 T 40 8 T 60 4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+
   return (
-    <div className="flex flex-col min-h-full">
-      {/* Page Header */}
-      <div className="bg-white px-8 py-6 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto w-full">
-          <h1 className="text-2xl font-bold text-slate-800">Selamat {getGreeting()}, {displayName} 👋</h1>
-          <div className="text-xs text-slate-500 flex items-center gap-1 mt-1 font-medium">
-            <span>{todayDateStr}</span>
-          </div>
-        </div>
+    <div style={{backgroundColor: 'var(--ds-bg-page)', minHeight: '100%'}}>
+      {/* Header */}
+      <div className={styles.header}>
+        <h1 className={styles.headerTitle}>Selamat {getGreeting()}, {displayName} 👋</h1>
+        <div className={styles.headerDate}>{todayDateStr}</div>
       </div>
 
-      <div className="p-8 max-w-7xl mx-auto w-full flex-1">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div className="absolute -right-6 -top-6 text-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-              <Users size={120} />
+      <div className={styles.container}>
+        
+        {/* KPI Cards */}
+        <div className={styles.kpiGrid}>
+          {/* Card 1 */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} ${styles.primary}`}>
+                <Users size={18} />
+              </div>
+              <span>Total Karyawan</span>
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
-                <div className="p-2 bg-blue-100 rounded-full">
-                  <Users size={20} className="text-blue-600" />
-                </div>
-                <span>Total Employees</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.totalEmployees}</h3>
-                <span className="text-sm font-medium text-slate-400">active</span>
-              </div>
+            <div className={styles.kpiValueContainer}>
+              <span className={styles.kpiValue}>{metrics.totalEmployees}</span>
+              <span className={styles.kpiUnit}>aktif</span>
             </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div className="absolute -right-6 -top-6 text-purple-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-              <FileText size={120} />
-            </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
-                <div className="p-2 bg-purple-100 rounded-full">
-                  <FileText size={20} className="text-purple-600" />
-                </div>
-                <span>Daily Reports Today</span>
+            <div className={styles.kpiFooter}>
+              <div className={`${styles.kpiDelta} ${styles.positive}`}>
+                <ArrowUpRight size={14} /> <span>+2 hari ini</span>
               </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.todayReports}</h3>
-                <span className="text-sm font-medium text-slate-400">/ {metrics.totalEmployees} submitted</span>
-              </div>
+              <Sparkline color="var(--ds-primary-500)" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div className="absolute -right-6 -top-6 text-green-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-              <Activity size={120} />
+          {/* Card 2 */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} ${styles.neutral}`}>
+                <FileText size={18} />
+              </div>
+              <span>Laporan Harian</span>
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
-                <div className="p-2 bg-green-100 rounded-full">
-                  <Activity size={20} className="text-green-600" />
-                </div>
-                <span>Attendance Rate Today</span>
+            <div className={styles.kpiValueContainer}>
+              <span className={styles.kpiValue}>{metrics.todayReports}</span>
+              <span className={styles.kpiUnit}>/ {metrics.totalEmployees} masuk</span>
+            </div>
+            <div className={styles.kpiFooter}>
+              <div className={`${styles.kpiDelta} ${styles.neutral}`}>
+                <ArrowRight size={14} /> <span>Sama seperti kemarin</span>
               </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">
-                  {metrics.chartData.every(d => d.rate === 0) && metrics.attendanceRate === 0 ? '--' : metrics.attendanceRate}%
-                </h3>
-                <span className="text-sm font-medium text-slate-400">present</span>
-              </div>
-              {metrics.chartData.every(d => d.rate === 0) && metrics.attendanceRate === 0 && (
-                <p className="text-xs text-slate-400 mt-2 font-medium">Belum ada data absensi hari ini</p>
-              )}
+              <Sparkline color="var(--ds-neutral-400)" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div className="absolute -right-6 -top-6 text-yellow-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-              <CalendarClock size={120} />
+          {/* Card 3 */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} ${styles.accent}`}>
+                <Activity size={18} />
+              </div>
+              <span>Tingkat Kehadiran</span>
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 text-slate-500 font-semibold mb-4">
-                <div className="p-2 bg-yellow-100 rounded-full">
-                  <CalendarClock size={20} className="text-yellow-600" />
-                </div>
-                <span>Pending Leaves</span>
+            <div className={styles.kpiValueContainer}>
+              <span className={styles.kpiValue}>
+                {metrics.chartData.every(d => d.rate === 0) && metrics.attendanceRate === 0 ? '--' : metrics.attendanceRate}%
+              </span>
+              <span className={styles.kpiUnit}>hadir</span>
+            </div>
+            <div className={styles.kpiFooter}>
+              <div className={`${styles.kpiDelta} ${styles.positive}`}>
+                <ArrowUpRight size={14} /> <span>+5% dari kemarin</span>
               </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-bold text-slate-900 tracking-tight">{metrics.pendingLeaves}</h3>
-                <span className="text-sm font-medium text-slate-400">requests</span>
+              <Sparkline color="var(--ds-accent-500)" />
+            </div>
+          </div>
+
+          {/* Card 4 */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} ${styles.pending}`}>
+                <CalendarClock size={18} />
               </div>
+              <span>Menunggu Cuti</span>
+            </div>
+            <div className={styles.kpiValueContainer}>
+              <span className={styles.kpiValue}>{metrics.pendingLeaves}</span>
+              <span className={styles.kpiUnit}>pengajuan</span>
+            </div>
+            <div className={styles.kpiFooter}>
+              <div className={`${styles.kpiDelta} ${styles.neutral}`}>
+                <ArrowRight size={14} /> <span>Perlu tindakan</span>
+              </div>
+              <Sparkline color="var(--ds-pending-500)" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 mt-6">
-          <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Rate by Department</h2>
-          <div className="h-72 w-full">
+        {/* Main Chart */}
+        <div className={styles.chartContainer}>
+          <h2 className={styles.chartTitle}>Tingkat Kehadiran per Departemen</h2>
+          <div className={styles.chartArea}>
             {metrics.chartData.some(d => d.rate > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={{stroke: '#e2e8f0'}} />
-                  <YAxis tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
+                {/* HORIZONTAL BAR CHART */}
+                <BarChart data={metrics.chartData} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--ds-border-color)" />
+                  <XAxis type="number" domain={[0, 100]} tick={{fill: 'var(--ds-text-secondary)', fontSize: 12}} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}%`} />
+                  <YAxis type="category" dataKey="name" tick={{fill: 'var(--ds-text-secondary)', fontSize: 12}} tickLine={false} axisLine={{stroke: 'var(--ds-border-color)'}} width={120} />
                   <Tooltip 
-                    cursor={{fill: '#f8fafc'}} 
-                    contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '12px'}}
-                    formatter={(value: number, _name: string, props: any) => [`${value}% (${props.payload?.name})`, 'Attendance Rate']}
+                    cursor={{fill: 'var(--ds-bg-surface-hover)'}} 
+                    contentStyle={{borderRadius: 'var(--ds-radius-md)', border: '1px solid var(--ds-border-color)', boxShadow: 'var(--ds-shadow-md)', padding: '12px'}}
+                    formatter={(value: number) => [`${value}%`, 'Kehadiran']}
                   />
-                  <Bar dataKey="rate" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                  <Bar dataKey="rate" fill="var(--ds-primary-500)" radius={[0, 4, 4, 0]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                <div className="p-4 bg-slate-50 rounded-full mb-3">
-                  <Activity size={32} className="text-slate-300" />
-                </div>
-                <p className="font-medium text-slate-500">Belum ada data kehadiran untuk hari ini</p>
-                <p className="text-sm mt-1">Data grafik akan muncul setelah karyawan melakukan clock-in.</p>
+              <div className={styles.emptyState}>
+                <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <circle cx="12" cy="11" r="3" />
+                </svg>
+                <h3 className={styles.emptyStateTitle}>Belum ada data kehadiran hari ini</h3>
+                <p className={styles.emptyStateDesc}>Karyawan belum melakukan clock-in hari ini. Data grafik akan muncul setelah ada aktivitas.</p>
+                <button className={styles.ctaButton} onClick={() => navigate('/attendance')}>
+                  Mulai Clock-in Manual
+                </button>
               </div>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Bottom Charts */}
+        <div className={styles.bottomGrid}>
           {/* Leave Trend Chart */}
-          <div className="bg-white p-8 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200">
-            <h2 className="text-lg font-bold mb-6 text-slate-800">Leave Trend (6 Months)</h2>
-            <div className="h-72 w-full">
+          <div className={styles.chartContainer}>
+            <h2 className={styles.chartTitle}>Tren Cuti (6 Bulan Terakhir)</h2>
+            <div className={styles.chartArea}>
               {metrics.leaveTrend.some(d => d.total > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={metrics.leaveTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="name" tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={{stroke: '#e2e8f0'}} />
-                    <YAxis tick={{fill: '#64748b', fontSize: 12}} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--ds-border-color)" />
+                    <XAxis dataKey="name" tick={{fill: 'var(--ds-text-secondary)', fontSize: 12}} tickLine={false} axisLine={{stroke: 'var(--ds-border-color)'}} />
+                    <YAxis tick={{fill: 'var(--ds-text-secondary)', fontSize: 12}} tickLine={false} axisLine={false} allowDecimals={false} />
                     <Tooltip 
-                      cursor={{stroke: '#e2e8f0', strokeWidth: 2}} 
-                      contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                      cursor={{stroke: 'var(--ds-border-color)', strokeWidth: 2}} 
+                      contentStyle={{borderRadius: 'var(--ds-radius-md)', border: '1px solid var(--ds-border-color)', boxShadow: 'var(--ds-shadow-md)'}}
                     />
-                    <Line type="monotone" dataKey="total" name="Requests" stroke="#2563eb" strokeWidth={3} dot={{r: 4, fill: '#2563eb', strokeWidth: 0}} activeDot={{r: 6}} />
+                    <Line type="monotone" dataKey="total" name="Pengajuan" stroke="var(--ds-primary-600)" strokeWidth={3} dot={{r: 4, fill: 'var(--ds-primary-600)', strokeWidth: 0}} activeDot={{r: 6}} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                  <div className="p-4 bg-slate-50 rounded-full mb-3">
-                    <CalendarClock size={32} className="text-slate-300" />
-                  </div>
-                  <p className="font-medium text-slate-500">Belum ada pengajuan cuti</p>
-                  <p className="text-sm mt-1">Data tren akan muncul setelah ada pengajuan cuti.</p>
+                <div className={styles.emptyState}>
+                  <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  <h3 className={styles.emptyStateTitle}>Belum ada pengajuan cuti</h3>
+                  <p className={styles.emptyStateDesc}>Data tren akan muncul setelah ada pengajuan cuti dari karyawan.</p>
+                  <button className={styles.ctaButton} onClick={() => navigate('/leaves')}>
+                    Kelola Cuti
+                  </button>
                 </div>
               )}
             </div>
           </div>
 
           {/* Attendance Distribution Chart */}
-          <div className="bg-white p-8 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200">
-            <h2 className="text-lg font-bold mb-6 text-slate-800">Attendance Status (This Month)</h2>
-            <div className="h-72 w-full">
+          <div className={styles.chartContainer}>
+            <h2 className={styles.chartTitle}>Status Kehadiran (Bulan Ini)</h2>
+            <div className={styles.chartArea}>
               {metrics.attendanceDistribution.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -291,18 +315,24 @@ export const Dashboard = () => {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                      contentStyle={{borderRadius: 'var(--ds-radius-md)', border: '1px solid var(--ds-border-color)', boxShadow: 'var(--ds-shadow-md)'}}
                     />
                     <Legend verticalAlign="bottom" height={36} iconType="circle" />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                  <div className="p-4 bg-slate-50 rounded-full mb-3">
-                    <Activity size={32} className="text-slate-300" />
-                  </div>
-                  <p className="font-medium text-slate-500">Belum ada data kehadiran bulan ini</p>
-                  <p className="text-sm mt-1">Diagram akan muncul setelah karyawan melakukan clock-in.</p>
+                <div className={styles.emptyState}>
+                  <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  <h3 className={styles.emptyStateTitle}>Belum ada data staf bulan ini</h3>
+                  <p className={styles.emptyStateDesc}>Tambahkan karyawan terlebih dahulu agar sistem dapat mulai memantau absensi.</p>
+                  <button className={styles.ctaButton} onClick={() => navigate('/employees')}>
+                    Tambah Karyawan
+                  </button>
                 </div>
               )}
             </div>
